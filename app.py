@@ -546,14 +546,15 @@ def magister_evaluate():
     from src.magister import Magister, GameEvaluation
     data = request.get_json() or {}
     magister = Magister(name=data.get('magister_name', 'Magister'))
-    evaluation = GameEvaluation(
+    evaluation = magister.evaluate_game(
+        player_name=data.get('player', ''),
         technical_virtuosity=data.get('technical_virtuosity', 0.0),
         contemplative_depth=data.get('contemplative_depth', 0.0),
         synthesis_quality=data.get('synthesis_quality', 0.0),
         ceremonial_presence=data.get('ceremonial_presence', 0.0),
+        notes=data.get('notes', ''),
     )
-    magister.evaluate_player(data.get('player', ''), evaluation)
-    log_to_terminal(f"Magister {magister.name} evaluated {data.get('player', '')}: {evaluation.overall_score()}", 'move')
+    log_to_terminal(f"Magister {magister.name} evaluated {data.get('player', '')}: {evaluation.overall_score}", 'move')
     return jsonify({"evaluation": evaluation.to_dict(), "magister": magister.to_dict()})
 
 @app.route('/api/play-mode', methods=['POST'])

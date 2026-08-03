@@ -11,7 +11,7 @@
 <div id="strategy-dashboard">
     <div class="dashboard-header">
         <h1>STRATEGY DASHBOARD</h1>
-        <p>Ten panels for mastery of the Glass Bead Game</p>
+        <p>Eleven panels for mastery of the Glass Bead Game</p>
     </div>
 
     <div class="dashboard-grid">
@@ -31,13 +31,14 @@
         <div class="dash-card" id="replay-card"></div>
 
         <!-- Row 4 -->
+        <div class="dash-card" id="pathway-selector-card"></div>
         <div class="dash-card wide" id="matchmaking-card"></div>
     </div>
 
     <!-- Knowledge Transformers Section -->
     <div class="dashboard-header" style="margin-top: 2rem;">
         <h1>KNOWLEDGE TRANSFORMERS</h1>
-        <p>Ten bidirectional domain-pair transformers — find the thread between any two fields</p>
+        <p>Nineteen bidirectional domain-pair transformers — find the thread between any two fields</p>
     </div>
     <div class="dashboard-grid">
         <div class="dash-card kt-transformer-card" id="kt-card-0"></div>
@@ -50,6 +51,14 @@
         <div class="dash-card kt-transformer-card" id="kt-card-7"></div>
         <div class="dash-card kt-transformer-card" id="kt-card-8"></div>
         <div class="dash-card kt-transformer-card" id="kt-card-9"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-10"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-11"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-12"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-13"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-14"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-15"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-16"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-17"></div>
     </div>
 </div>
 {% endblock %}
@@ -66,6 +75,7 @@
 <script src="{{ url_for('static', filename='js/replay-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matchmaking-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/knowledge-transformer-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pathway-selector-panel.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (window.IdentityPanel) IdentityPanel.init('identity-card');
@@ -78,7 +88,8 @@
         if (window.PathfinderPanel) PathfinderPanel.init('pathfinder-card');
         if (window.ReplayPanel) ReplayPanel.init('replay-card');
         if (window.MatchmakingPanel) MatchmakingPanel.init('matchmaking-card');
-        // Knowledge Transformers — 10 domain-pair panels
+        if (window.PathwaySelectorPanel) PathwaySelectorPanel.init('pathway-selector-card');
+        // Knowledge Transformers — 19 domain-pair panels (11 original + 8 Coda)
         if (window.KnowledgeTransformerPanel && window.KnowledgeTransformerPanel.TRANSFORMERS) {
             window.KnowledgeTransformerPanel.TRANSFORMERS.forEach(function(cfg, i) {
                 var cardId = 'kt-card-' + i;

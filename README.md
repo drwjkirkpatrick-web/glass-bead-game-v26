@@ -421,8 +421,8 @@ Every third session triggers the **Knecht Protocol**: if no practical applicatio
 | Route | Purpose |
 |-------|---------|
 | `/` | Main 3D visualization + live terminal + quick move input |
-| `/gameplay` | Active move submission, Abacus Board, Math↔Music transformer, 10 knowledge transformers, validation |
-| `/dashboard` | Strategy dashboard: 10 original panels + 10 knowledge transformer panels |
+| `/gameplay` | Active move submission, Abacus Board, Math↔Music transformer, 19 knowledge transformers, validation |
+| `/dashboard` | Strategy dashboard: 11 strategy panels + 19 knowledge transformer panels + pathway selector |
 | `/judges` | Scoring rubric, validation queue, Castalian flags, promotion table |
 | `/audience` | Read-only view with scoreboard and move feed |
 
