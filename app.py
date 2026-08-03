@@ -214,6 +214,56 @@ def get_terminal_log():
     """Get terminal log history."""
     return jsonify(game_state['terminal_log'][-50:])
 
+# ─── Math ↔ Music Transformer API ────────────────────────
+
+from src.math_music_transformer import get_transformer as get_mm_transformer
+
+@app.route('/api/transform', methods=['POST'])
+def transform_math_music():
+    """Execute a single Math ↔ Music transformation."""
+    data = request.get_json() or {}
+    transformer = get_mm_transformer()
+    result = transformer.transform(
+        origin_concept=data.get('origin_concept', ''),
+        origin_domain=data.get('origin_domain', ''),
+        destination_domain=data.get('destination_domain', ''),
+        structural_property=data.get('structural_property', ''),
+        resonance_sentence=data.get('resonance_sentence', ''),
+        tokens=data.get('tokens', []),
+    )
+    log_to_terminal(f"Transformer: {result.origin_concept} → {result.destination_concept} ({result.total_confidence})", 'move')
+    return jsonify(result.to_dict())
+
+@app.route('/api/transform/batch', methods=['POST'])
+def transform_batch():
+    """Batch transform multiple moves."""
+    data = request.get_json() or {}
+    moves = data.get('moves', [])
+    transformer = get_mm_transformer()
+    results = transformer.batch_transform(moves)
+    log_to_terminal(f"Batch transform: {len(results)} moves processed", 'system')
+    return jsonify([r.to_dict() for r in results])
+
+@app.route('/api/transform/catalog', methods=['GET'])
+def get_transform_catalog():
+    """Browse the isomorphism library."""
+    transformer = get_mm_transformer()
+    return jsonify(transformer.get_isomorphism_catalog())
+
+@app.route('/api/transform/entropy', methods=['POST'])
+def transform_entropy():
+    """Compute token entropy for a transformation."""
+    import math
+    data = request.get_json() or {}
+    tokens = data.get('tokens', [])
+    if not tokens:
+        return jsonify({"entropy": 0.0, "peak_stage": "N/A"})
+    from collections import Counter
+    counts = Counter(tokens)
+    total = len(tokens)
+    entropy = -sum((c/total) * math.log2(c/total) for c in counts.values())
+    return jsonify({"entropy": round(entropy, 3), "peak_stage": data.get('current_stage', 'UNKNOWN')})
+
 # ─── SocketIO Events ────────────────────────────────────
 
 @socketio.on('connect')

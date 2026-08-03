@@ -382,6 +382,8 @@
     .swatch-technologia  { background: var(--color-technologia);  }
     .swatch-medicina     { background: var(--color-medicina);     }
 </style>
+<!-- Transformer panel styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/transformer-panel.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -570,6 +572,10 @@
         <div id="terminal-header">Terminal</div>
         <div id="terminal-log"></div>
     </div>
+
+    <!-- Math ↔ Music Transformer panel -->
+    <div id="transformer-panel" class="glass-panel"></div>
+
 </div>
 {% endblock %}
 
@@ -578,5 +584,13 @@
     window.DASHBOARD_TYPE = 'gameplay';
 </script>
 <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+<script src="{{ url_for('static', filename='js/transformer-panel.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.TransformerPanel) {
+            window.TransformerPanel.init('transformer-panel');
+        }
+    });
+</script>
 <script type="module" src="{{ url_for('static', filename='js/3d-scene.js') }}"></script>
 {% endblock %}
