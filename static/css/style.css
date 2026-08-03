@@ -1,0 +1,386 @@
+/* Glass Bead Game v26 — Glass Terminal / 3D HUD Aesthetic */
+
+/* ──────────────────────────────────────────────────────────
+   CSS Custom Properties
+   ────────────────────────────────────────────────────────── */
+:root {
+  --color-musica:       #00e5ff;
+  --color-mathematica:  #ff00ff;
+  --color-historia:     #ffd700;
+  --color-natura:       #00ff7f;
+  --color-lingua:       #ff6b6b;
+  --color-philosophia:  #9370db;
+  --color-technologia:  #ffa500;
+  --color-medicina:     #ff69b4;
+
+  --bg-deep:     #0a0a0f;
+  --bg-mid:      #0d1117;
+  --text-base:   #c9d1d9;
+  --cyan:        #00e5ff;
+  --gold:        #ffd700;
+  --rose:        #ff6b6b;
+  --mint:        #00ff7f;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Reset & Base
+   ────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: linear-gradient(180deg, var(--bg-deep), var(--bg-mid));
+  color: var(--text-base);
+  font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Scrollbar
+   ────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 229, 255, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 255, 0.45);
+}
+
+/* ──────────────────────────────────────────────────────────
+   3D Scene Container
+   ────────────────────────────────────────────────────────── */
+#scene-container {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Glass Panel
+   ────────────────────────────────────────────────────────── */
+.glass-panel {
+  background: rgba(13, 17, 23, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 229, 255, 0.15);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.05);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-panel:hover {
+  border-color: rgba(0, 229, 255, 0.3);
+  box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Terminal Text Styles
+   ────────────────────────────────────────────────────────── */
+.terminal-text {
+  color: var(--cyan);
+  text-shadow: 0 0 5px rgba(0, 229, 255, 0.3);
+}
+
+.terminal-warn {
+  color: var(--gold);
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+.terminal-error {
+  color: var(--rose);
+  text-shadow: 0 0 5px rgba(255, 107, 107, 0.3);
+}
+
+.terminal-move {
+  color: var(--mint);
+  text-shadow: 0 0 5px rgba(0, 255, 127, 0.3);
+}
+
+/* ──────────────────────────────────────────────────────────
+   Navigation Bar
+   ────────────────────────────────────────────────────────── */
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(13, 17, 23, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nav-bar .nav-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+
+.nav-bar .nav-links a {
+  color: var(--text-base);
+  text-decoration: none;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  position: relative;
+  padding: 4px 0;
+  transition: color 0.3s ease;
+}
+
+.nav-bar .nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--cyan);
+  box-shadow: 0 0 6px rgba(0, 229, 255, 0.5);
+  transition: width 0.3s ease;
+}
+
+.nav-bar .nav-links a:hover {
+  color: var(--cyan);
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+
+.nav-bar .nav-links a:hover::after {
+  width: 100%;
+}
+
+/* ──────────────────────────────────────────────────────────
+   HUD Overlays
+   ────────────────────────────────────────────────────────── */
+.hud-overlay {
+  position: absolute;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.hud-overlay.pass-through {
+  pointer-events: none;
+}
+
+.hud-overlay.pass-through > * {
+  pointer-events: auto;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Terminal Panel
+   ────────────────────────────────────────────────────────── */
+.terminal-panel {
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.terminal-panel .log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  animation: fade-in 0.3s ease forwards;
+  opacity: 0;
+}
+
+.terminal-panel .log-entry .timestamp {
+  color: rgba(201, 209, 217, 0.5);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.terminal-panel .log-entry .message {
+  word-break: break-word;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Buttons
+   ────────────────────────────────────────────────────────── */
+.btn-glass {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: all 0.25s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(0, 229, 255, 0.18);
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.25), inset 0 0 8px rgba(0, 229, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+.btn-glass:active {
+  transform: translateY(0);
+}
+
+.btn-glass:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Score Panel
+   ────────────────────────────────────────────────────────── */
+.score-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+}
+
+.score-item .score-label {
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(201, 209, 217, 0.6);
+  margin-bottom: 4px;
+}
+
+.score-item .score-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cyan);
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.3);
+}
+
+/* Color variants for score items */
+.score-item.musica       .score-value { color: var(--color-musica);       text-shadow: 0 0 6px rgba(0,   229, 255, 0.3); }
+.score-item.mathematica  .score-value { color: var(--color-mathematica);  text-shadow: 0 0 6px rgba(255, 0,   255, 0.3); }
+.score-item.historia     .score-value { color: var(--color-historia);     text-shadow: 0 0 6px rgba(255, 215, 0,   0.3); }
+.score-item.natura       .score-value { color: var(--color-natura);       text-shadow: 0 0 6px rgba(0,   255, 127, 0.3); }
+.score-item.lingua       .score-value { color: var(--color-lingua);       text-shadow: 0 0 6px rgba(255, 107, 107, 0.3); }
+.score-item.philosophia  .score-value { color: var(--color-philosophia);  text-shadow: 0 0 6px rgba(147, 112, 219, 0.3); }
+.score-item.technologia  .score-value { color: var(--color-technologia);  text-shadow: 0 0 6px rgba(255, 165, 0,   0.3); }
+.score-item.medicina     .score-value { color: var(--color-medicina);     text-shadow: 0 0 6px rgba(255, 105, 180, 0.3); }
+
+/* ──────────────────────────────────────────────────────────
+   Animations
+   ────────────────────────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease forwards;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Responsive
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav-bar {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 16px;
+  }
+
+  .nav-bar .nav-links {
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #scene-container {
+    height: 60vh;
+    position: relative;
+  }
+
+  .hud-overlay {
+    position: relative;
+    width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-bottom: 8px;
+  }
+
+  .glass-panel {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .terminal-panel {
+    max-height: 200px;
+  }
+
+  .score-panel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .score-panel {
+    grid-template-columns: 1fr;
+  }
+}

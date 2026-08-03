@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Glass Bead Game{% endblock %} — v26</title>
+
+    <!-- KaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+
+    <!-- VexFlow -->
+    <script src="https://cdn.jsdelivr.net/npm/vexflow@4.0.3/build/cjs/vexflow.js"></script>
+
+    <!-- Three.js with Import Map (ES modules) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+    <style>
+        :root {
+            --bg-start: #0a0a0f;
+            --bg-end: #0d1117;
+            --glass-bg: rgba(20, 25, 40, 0.55);
+            --glass-border: rgba(100, 200, 255, 0.08);
+            --glass-highlight: rgba(100, 200, 255, 0.15);
+            --text-primary: #c9f0ff;
+            --text-glow: #00ffaa;
+            --text-dim: #6b8f9c;
+            --accent-cyan: #00e5ff;
+            --accent-green: #00ffaa;
+            --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: var(--font-mono);
+            background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Glassmorphism base */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35),
+                        inset 0 1px 0 var(--glass-highlight);
+        }
+
+        .glass-panel-strong {
+            background: rgba(15, 20, 35, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(100, 200, 255, 0.12);
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45),
+                        inset 0 1px 0 rgba(100, 200, 255, 0.18);
+        }
+
+        /* Glow text effects */
+        .glow-text {
+            text-shadow: 0 0 6px rgba(0, 229, 255, 0.45),
+                         0 0 12px rgba(0, 229, 255, 0.25);
+        }
+
+        .glow-text-green {
+            text-shadow: 0 0 6px rgba(0, 255, 170, 0.45),
+                         0 0 12px rgba(0, 255, 170, 0.25);
+        }
+
+        .glow-border {
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.15),
+                        inset 0 0 8px rgba(0, 229, 255, 0.05);
+        }
+
+        /* Top nav */
+        #top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1.2rem;
+            background: rgba(10, 12, 20, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        #nav-brand {
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+        }
+
+        #nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        #nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            transition: color 0.2s ease, text-shadow 0.2s ease;
+        }
+
+        #nav-links a:hover,
+        #nav-links a.active {
+            color: var(--accent-green);
+            text-shadow: 0 0 8px rgba(0, 255, 170, 0.35);
+        }
+
+        /* Main content wrapper */
+        #main-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding-top: 2.6rem; /* space for nav */
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 229, 255, 0.25);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 229, 255, 0.4);
+        }
+
+        /* Footer */
+        #site-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0.35rem 1rem;
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-align: center;
+            letter-spacing: 0.05em;
+            background: rgba(10, 12, 20, 0.6);
+            backdrop-filter: blur(6px);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* Utility */
+        .mono { font-family: var(--font-mono); }
+        .text-cyan { color: var(--accent-cyan); }
+        .text-green { color: var(--accent-green); }
+        .text-dim { color: var(--text-dim); }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(0,229,255,0.1); }
+            50% { box-shadow: 0 0 20px rgba(0,229,255,0.3); }
+        }
+        .btn-secondary {
+            background: rgba(255,215,0,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            color: #ffd700;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,215,0,0.2);
+            box-shadow: 0 0 12px rgba(255,215,0,0.15);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav id="top-nav">
+        <div id="nav-brand">&#9670; Castalia</div>
+        <ul id="nav-links">
+            <li><a href="/" class="{% if request.path == '/' %}active{% endif %}">Main</a></li>
+            <li><a href="/audience" class="{% if request.path == '/audience' %}active{% endif %}">Audience</a></li>
+            <li><a href="/gameplay" class="{% if request.path == '/gameplay' %}active{% endif %}">Gameplay</a></li>
+            <li><a href="/judges" class="{% if request.path == '/judges' %}active{% endif %}">Judges</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer id="site-footer">
+        Glass Bead Game v26 | Castalian Order
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

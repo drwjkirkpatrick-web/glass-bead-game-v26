@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}Gameplay — Glass Bead Game v26{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Gameplay dashboard layout */
+    #gameplay-dashboard {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* 3D scene — interactive */
+    #scene-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        cursor: grab;
+    }
+
+    #scene-container:active {
+        cursor: grabbing;
+    }
+
+    /* Left panel: Bead selection */
+    #bead-panel {
+        position: absolute;
+        top: 3.2rem;
+        left: 1rem;
+        width: 180px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        padding: 0.8rem;
+    }
+
+    #bead-header {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 0.2rem;
+    }
+
+    .bead-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.6rem;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .bead-btn:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: translateX(3px);
+    }
+
+    .bead-btn.active {
+        border-color: currentColor;
+        box-shadow: 0 0 10px currentColor;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .bead-swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        box-shadow: 0 0 6px currentColor;
+    }
+
+    /* Center overlay: Move submission form */
+    #move-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 420px;
+        max-width: 90vw;
+        z-index: 20;
+        padding: 1.2rem;
+    }
+
+    #move-header {
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        text-align: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .form-group {
+        margin-bottom: 0.9rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        margin-bottom: 0.3rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(0, 229, 255, 0.12);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 0.8rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 8px rgba(0, 229, 255, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 60px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
+    }
+
+    .form-row .form-group {
+        margin-bottom: 0;
+    }
+
+    #submit-move-btn {
+        width: 100%;
+        margin-top: 0.4rem;
+    }
+
+    /* Right panel: Validation feedback */
+    #validation-panel {
+        position: absolute;
+        top: 3.2rem;
+        right: 1rem;
+        width: 200px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        padding: 0.8rem;
+    }
+
+    #validation-header {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 0.6rem;
+    }
+
+    .validation-metric {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid rgba(0, 229, 255, 0.05);
+    }
+
+    .validation-metric:last-child {
+        border-bottom: none;
+    }
+
+    .metric-name {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-dim);
+    }
+
+    .metric-value {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--accent-green);
+        text-shadow: 0 0 6px rgba(0, 255, 170, 0.2);
+    }
+
+    .metric-bar-bg {
+        width: 100%;
+        height: 4px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 2px;
+        margin-top: 0.25rem;
+        overflow: hidden;
+    }
+
+    .metric-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+        border-radius: 2px;
+        transition: width 0.5s ease;
+    }
+
+    /* Bottom: Player stats */
+    #player-stats-panel {
+        position: absolute;
+        bottom: 2.2rem;
+        left: 1rem;
+        right: 1rem;
+        height: 100px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0 1rem;
+    }
+
+    #player-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        min-width: 140px;
+    }
+
+    #player-name-display {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--accent-cyan);
+    }
+
+    #player-rank-display {
+        font-size: 0.7rem;
+        color: var(--text-dim);
+    }
+
+    #rank-progress-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    #rank-progress-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #rank-progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(0, 0, 0, 0.35);
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid rgba(0, 229, 255, 0.08);
+    }
+
+    #rank-progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+        border-radius: 4px;
+        transition: width 0.6s ease;
+        box-shadow: 0 0 8px rgba(0, 229, 255, 0.25);
+    }
+
+    #player-score-summary {
+        display: flex;
+        gap: 1.2rem;
+        min-width: 180px;
+        justify-content: flex-end;
+    }
+
+    .summary-stat {
+        text-align: center;
+    }
+
+    .summary-stat .stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--accent-green);
+        text-shadow: 0 0 6px rgba(0, 255, 170, 0.25);
+    }
+
+    .summary-stat .stat-label {
+        font-size: 0.6rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+
+    /* Terminal panel */
+    #terminal-panel {
+        position: absolute;
+        bottom: 140px;
+        left: 1rem;
+        width: 320px;
+        max-height: 180px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        padding: 0.7rem;
+    }
+
+    #terminal-header {
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        padding-bottom: 0.3rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 0.3rem;
+    }
+
+    #terminal-log {
+        flex: 1;
+        overflow-y: auto;
+        font-size: 0.7rem;
+        line-height: 1.45;
+    }
+
+    .log-entry {
+        display: flex;
+        gap: 0.4rem;
+        padding: 0.1rem 0;
+        opacity: 0;
+        animation: fade-in 0.3s ease forwards;
+    }
+
+    .log-entry .timestamp {
+        color: var(--text-dim);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    /* Domain colours */
+    .domain-musica       { color: var(--color-musica);       }
+    .domain-mathematica  { color: var(--color-mathematica);  }
+    .domain-historia     { color: var(--color-historia);     }
+    .domain-natura       { color: var(--color-natura);       }
+    .domain-lingua       { color: var(--color-lingua);       }
+    .domain-philosophia  { color: var(--color-philosophia);  }
+    .domain-technologia  { color: var(--color-technologia);  }
+    .domain-medicina     { color: var(--color-medicina);     }
+
+    .swatch-musica       { background: var(--color-musica);       }
+    .swatch-mathematica  { background: var(--color-mathematica);  }
+    .swatch-historia     { background: var(--color-historia);     }
+    .swatch-natura       { background: var(--color-natura);       }
+    .swatch-lingua       { background: var(--color-lingua);       }
+    .swatch-philosophia  { background: var(--color-philosophia);  }
+    .swatch-technologia  { background: var(--color-technologia);  }
+    .swatch-medicina     { background: var(--color-medicina);     }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="gameplay-dashboard">
+    <!-- Full-screen 3D scene (interactive) -->
+    <div id="scene-container"></div>
+
+    <!-- Left panel: Bead selection -->
+    <div id="bead-panel" class="glass-panel">
+        <div id="bead-header">&#9670; Domains</div>
+        <button class="bead-btn" data-domain="musica">
+            <span class="bead-swatch swatch-musica"></span> Musica
+        </button>
+        <button class="bead-btn" data-domain="mathematica">
+            <span class="bead-swatch swatch-mathematica"></span> Mathematica
+        </button>
+        <button class="bead-btn" data-domain="historia">
+            <span class="bead-swatch swatch-historia"></span> Historia
+        </button>
+        <button class="bead-btn" data-domain="natura">
+            <span class="bead-swatch swatch-natura"></span> Natura
+        </button>
+        <button class="bead-btn" data-domain="lingua">
+            <span class="bead-swatch swatch-lingua"></span> Lingua
+        </button>
+        <button class="bead-btn" data-domain="philosophia">
+            <span class="bead-swatch swatch-philosophia"></span> Philosophia
+        </button>
+        <button class="bead-btn" data-domain="technologia">
+            <span class="bead-swatch swatch-technologia"></span> Technologia
+        </button>
+        <button class="bead-btn" data-domain="medicina">
+            <span class="bead-swatch swatch-medicina"></span> Medicina
+        </button>
+    </div>
+
+    <!-- Center overlay: Move submission form -->
+    <div id="move-overlay" class="glass-panel-strong">
+        <div id="move-header">Submit Move</div>
+        <form id="move-form">
+            <div class="form-group">
+                <label for="bead-select">Bead (Magister)</label>
+                <select id="bead-select" name="bead">
+                    <option value="" disabled selected>Select a Magister...</option>
+                    <option value="magister_1">Magister Musicae</option>
+                    <option value="magister_2">Magister Mathematicae</option>
+                    <option value="magister_3">Magister Historiae</option>
+                    <option value="magister_4">Magister Naturae</option>
+                    <option value="magister_5">Magister Linguae</option>
+                    <option value="magister_6">Magister Philosophiae</option>
+                    <option value="magister_7">Magister Technologiae</option>
+                    <option value="magister_8">Magister Medicinae</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="from-concept">From Concept</label>
+                    <input type="text" id="from-concept" name="from_concept" placeholder="e.g. Fugue">
+                </div>
+                <div class="form-group">
+                    <label for="from-domain">Domain</label>
+                    <select id="from-domain" name="from_domain">
+                        <option value="musica">Musica</option>
+                        <option value="mathematica">Mathematica</option>
+                        <option value="historia">Historia</option>
+                        <option value="natura">Natura</option>
+                        <option value="lingua">Lingua</option>
+                        <option value="philosophia">Philosophia</option>
+                        <option value="technologia">Technologia</option>
+                        <option value="medicina">Medicina</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="to-concept">To Concept</label>
+                    <input type="text" id="to-concept" name="to_concept" placeholder="e.g. Recursion">
+                </div>
+                <div class="form-group">
+                    <label for="to-domain">Domain</label>
+                    <select id="to-domain" name="to_domain">
+                        <option value="musica">Musica</option>
+                        <option value="mathematica">Mathematica</option>
+                        <option value="historia">Historia</option>
+                        <option value="natura" selected>Natura</option>
+                        <option value="lingua">Lingua</option>
+                        <option value="philosophia">Philosophia</option>
+                        <option value="technologia">Technologia</option>
+                        <option value="medicina">Medicina</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="via-property">Via (Structural Property)</label>
+                <textarea id="via-property" name="via" rows="2" placeholder="Describe the structural bridge..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="resonance">Resonance (Poetic Sentence)</label>
+                <textarea id="resonance" name="resonance" rows="2" placeholder="A single luminous sentence..."></textarea>
+            </div>
+
+            <button type="submit" id="submit-move-btn" class="btn-glass">
+                &#9650; Submit Move
+            </button>
+        </form>
+    </div>
+
+    <!-- Right panel: Move validation feedback -->
+    <div id="validation-panel" class="glass-panel">
+        <div id="validation-header">&#9733; Validation</div>
+        <div class="validation-metric">
+            <div>
+                <div class="metric-name">Elegance</div>
+                <div class="metric-bar-bg">
+                    <div id="bar-elegance" class="metric-bar-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="metric-value" id="val-elegance">—</div>
+        </div>
+        <div class="validation-metric">
+            <div>
+                <div class="metric-name">Fertility</div>
+                <div class="metric-bar-bg">
+                    <div id="bar-fertility" class="metric-bar-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="metric-value" id="val-fertility">—</div>
+        </div>
+        <div class="validation-metric">
+            <div>
+                <div class="metric-name">Surprise</div>
+                <div class="metric-bar-bg">
+                    <div id="bar-surprise" class="metric-bar-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="metric-value" id="val-surprise">—</div>
+        </div>
+        <div class="validation-metric">
+            <div>
+                <div class="metric-name">Recursion</div>
+                <div class="metric-bar-bg">
+                    <div id="bar-recursion" class="metric-bar-fill" style="width:0%"></div>
+                </div>
+            </div>
+            <div class="metric-value" id="val-recursion">—</div>
+        </div>
+    </div>
+
+    <!-- Bottom: Player stats -->
+    <div id="player-stats-panel" class="glass-panel">
+        <div id="player-info">
+            <div id="player-name-display">Player</div>
+            <div id="player-rank-display">Rank: Novice</div>
+        </div>
+        <div id="rank-progress-wrap">
+            <div id="rank-progress-label">
+                <span>Rank Progress</span>
+                <span id="rank-progress-text">0 / 1000</span>
+            </div>
+            <div id="rank-progress-bar">
+                <div id="rank-progress-fill"></div>
+            </div>
+        </div>
+        <div id="player-score-summary">
+            <div class="summary-stat">
+                <div class="stat-value" id="stat-total-moves">0</div>
+                <div class="stat-label">Moves</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-value" id="stat-total-score">0</div>
+                <div class="stat-label">Score</div>
+            </div>
+            <div class="summary-stat">
+                <div class="stat-value" id="stat-rank">—</div>
+                <div class="stat-label">Rank</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal panel -->
+    <div id="terminal-panel" class="glass-panel">
+        <div id="terminal-header">Terminal</div>
+        <div id="terminal-log"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.DASHBOARD_TYPE = 'gameplay';
+</script>
+<script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/3d-scene.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judges — Glass Bead Game v26</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+    <style>
+        .glass-panel { background: rgba(13,17,23,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(0,229,255,0.15); border-radius: 8px; padding: 16px; }
+        .hud-panel { margin: 8px; }
+        .dimension-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .score-slider { flex: 1; }
+        .score-value { min-width: 24px; text-align: right; }
+        .panel-title { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+        .terminal-text { color: #00e5ff; }
+        .terminal-warn { color: #ffd700; }
+        .terminal-move { color: #00ff7f; }
+        .move-display { padding: 8px; font-style: italic; min-height: 40px; }
+        .promo-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .promo-table th { text-align: left; padding: 4px; border-bottom: 1px solid rgba(0,229,255,0.1); color: var(--text-dim); }
+        .promo-table td { padding: 4px; }
+        .queue-list { max-height: 200px; overflow-y: auto; }
+        .alert-list { max-height: 150px; overflow-y: auto; }
+        .knecht-banner { display: flex; align-items: center; gap: 8px; padding: 8px; margin-top: 8px; font-size: 0.75rem; color: #ffd700; border-top: 1px solid rgba(255,215,0,0.1); }
+        .knecht-icon { font-size: 1.2rem; }
+        #scene-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; background: radial-gradient(ellipse at center, #0d1117 0%, #050508 100%); }
+        .hud-overlay { position: fixed; top: 3rem; left: 0; width: 100vw; height: calc(100vh - 3rem); z-index: 10; pointer-events: none; display: grid; grid-template-columns: 320px 1fr 320px; grid-template-rows: 1fr auto; gap: 8px; padding: 8px; }
+        .hud-overlay > * { pointer-events: auto; }
+        #queue-panel { grid-column: 1; grid-row: 1; }
+        #score-panel { grid-column: 2; grid-row: 1; max-width: 480px; justify-self: center; }
+        #flag-panel { grid-column: 3; grid-row: 1; }
+        #promo-panel { grid-column: 1 / -1; grid-row: 2; }
+        .terminal-panel { grid-column: 1; position: fixed; bottom: 8px; left: 8px; width: 320px; height: 200px; }
+        .scoring-form { display: flex; flex-direction: column; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+        input[type="text"], textarea, select { background: rgba(0,0,0,0.3); border: 1px solid rgba(0,229,255,0.1); color: #c9f0ff; padding: 8px; border-radius: 4px; font-family: inherit; }
+        input[type="range"] { width: 100%; }
+        .btn-primary { background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; transition: all 0.2s; }
+        .btn-primary:hover { background: rgba(0,229,255,0.2); box-shadow: 0 0 12px rgba(0,229,255,0.15); }
+    </style>
+</head>
+<body>
+    <style>
+        body { background: #0a0a0f; color: #c9f0ff; font-family: "JetBrains Mono", monospace; }
+    </style>
+    <!-- Navigation -->
+    <nav class="glass-nav">
+        <div class="nav-brand">
+            <span class="brand-icon">◊</span>
+            <span class="brand-text">{{ game_name }} {{ game_version }}</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Main</a>
+            <a href="/audience">Audience</a>
+            <a href="/gameplay">Gameplay</a>
+            <a href="/judges" class="active">Judges</a>
+        </div>
+    </nav>
+
+    <!-- 3D Scene Container -->
+    <div id="scene-container"></div>
+
+    <!-- HUD Overlay -->
+    <div class="hud-overlay">
+        <!-- Left: Validation Queue -->
+        <div class="hud-panel glass-panel" id="queue-panel">
+            <h3 class="panel-title terminal-text">Validation Queue</h3>
+            <div id="validation-queue" class="queue-list">
+                <div class="empty-state">No pending moves</div>
+            </div>
+        </div>
+
+        <!-- Center: Scoring Rubric -->
+        <div class="hud-panel glass-panel" id="score-panel">
+            <h3 class="panel-title terminal-text">Scoring Rubric</h3>
+            <form id="scoring-form" class="scoring-form">
+                <input type="hidden" id="move-id" value="">
+                
+                <div class="form-group">
+                    <label class="terminal-text">Selected Move</label>
+                    <div id="selected-move-display" class="move-display glass-panel">
+                        <em>Select a move from the queue</em>
+                    </div>
+                </div>
+
+                <div class="scoring-dimensions">
+                    <div class="dimension-row">
+                        <label class="terminal-text">Elegance</label>
+                        <input type="range" id="score-elegance" min="1" max="10" value="5" class="score-slider">
+                        <span class="score-value terminal-move" id="val-elegance">5</span>
+                    </div>
+                    <div class="dimension-row">
+                        <label class="terminal-text">Fertility</label>
+                        <input type="range" id="score-fertility" min="1" max="10" value="5" class="score-slider">
+                        <span class="score-value terminal-move" id="val-fertility">5</span>
+                    </div>
+                    <div class="dimension-row">
+                        <label class="terminal-text">Surprise</label>
+                        <input type="range" id="score-surprise" min="1" max="10" value="5" class="score-slider">
+                        <span class="score-value terminal-move" id="val-surprise">5</span>
+                    </div>
+                    <div class="dimension-row">
+                        <label class="terminal-text">Recursion</label>
+                        <input type="range" id="score-recursion" min="1" max="10" value="5" class="score-slider">
+                        <span class="score-value terminal-move" id="val-recursion">5</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="terminal-text">Valid</label>
+                    <input type="checkbox" id="move-valid" checked>
+                </div>
+
+                <div class="form-group">
+                    <label class="terminal-text">Comments</label>
+                    <textarea id="judge-comments" rows="3" class="terminal-input"
+                              placeholder="Poetic or structural observations..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary" id="submit-validation">
+                    Submit Validation
+                </button>
+            </form>
+        </div>
+
+        <!-- Right: Castalian Flag Panel -->
+        <div class="hud-panel glass-panel" id="flag-panel">
+            <h3 class="panel-title terminal-warn">Castalian Flags</h3>
+            <div id="castalian-alerts" class="alert-list">
+                <div class="empty-state">No flagged sessions</div>
+            </div>
+            <div class="knecht-banner" id="knecht-protocol">
+                <span class="knecht-icon">☀</span>
+                <span class="knecht-text">Knecht Protocol: Every 3rd session requires practical application</span>
+            </div>
+        </div>
+
+        <!-- Bottom: Promotion Recommendations -->
+        <div class="hud-panel glass-panel" id="promo-panel">
+            <h3 class="panel-title terminal-text">Promotion Recommendations</h3>
+            <table class="promo-table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Current Rank</th>
+                        <th>Moves</th>
+                        <th>Avg Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="promo-tbody">
+                    <tr><td colspan="5" class="empty-cell"><em>No players eligible</em></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bottom-left: Terminal -->
+        <div class="hud-panel glass-panel terminal-panel" id="terminal-panel">
+            <div class="terminal-header">
+                <span class="terminal-title">Terminal Log</span>
+                <div class="terminal-controls">
+                    <button id="term-clear" class="term-btn">Clear</button>
+                    <button id="term-pause" class="term-btn">Pause</button>
+                </div>
+            </div>
+            <div id="terminal-log" class="terminal-body"></div>
+        </div>
+    </div>
+
+    <!-- 3D Scene module (uses import map from base.html) -->
+    <script type="module" src="{{ url_for('static', filename='js/3d-scene.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/live-terminal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize 3D scene (overview mode)
+        if (window.GlassBeadScene) {
+            window.GlassBeadScene.init('scene-container', { interactive: false });
+        }
+
+        // Initialize terminal
+        if (window.LiveTerminal) {
+            window.LiveTerminal.init('terminal-log', { maxLines: 20 });
+        }
+
+        // Initialize dashboard
+        if (window.Dashboard) {
+            window.Dashboard.init('judges', { socketUrl: '/' });
+            window.Dashboard.updateQueue();
+        }
+
+        // Slider value updates
+        ['elegance','fertility','surprise','recursion'].forEach(dim => {
+            const slider = document.getElementById('score-' + dim);
+            const display = document.getElementById('val-' + dim);
+            if (slider && display) {
+                slider.addEventListener('input', () => display.textContent = slider.value);
+            }
+        });
+
+        // Validation form
+        document.getElementById('scoring-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const moveId = document.getElementById('move-id').value;
+            if (!moveId) {
+                alert('Select a move from the queue first');
+                return;
+            }
+            const scores = {
+                elegance: parseInt(document.getElementById('score-elegance').value),
+                fertility: parseInt(document.getElementById('score-fertility').value),
+                surprise: parseInt(document.getElementById('score-surprise').value),
+                recursion: parseInt(document.getElementById('score-recursion').value),
+                valid: document.getElementById('move-valid').checked,
+            };
+            const comments = document.getElementById('judge-comments').value;
+            
+            if (window.Dashboard && window.Dashboard.validateMove) {
+                window.Dashboard.validateMove(moveId, scores, comments).then(() => {
+                    document.getElementById('selected-move-display').innerHTML = '<em>Select a move from the queue</em>';
+                    document.getElementById('move-id').value = '';
+                    window.Dashboard.updateQueue();
+                });
+            }
+        });
+    });
+    </script>
+</body>
+</html>

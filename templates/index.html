@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+
+{% block title %}Glass Bead Game{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Scene fills the viewport behind overlays */
+    #scene-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 0;
+        background: radial-gradient(ellipse at center, #0d1117 0%, #050508 100%);
+    }
+
+    #scene-container canvas {
+        display: block;
+    }
+
+    /* Overlay layer above canvas */
+    #hud-layer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 10;
+        pointer-events: none; /* let clicks pass through to canvas where not on HUD */
+    }
+
+    #hud-layer > .hud-panel {
+        pointer-events: auto;
+    }
+
+    /* Top-left live terminal */
+    #terminal-panel {
+        position: absolute;
+        top: 3.2rem;
+        left: 1rem;
+        width: 380px;
+        max-width: 30vw;
+        min-height: 200px;
+        max-height: 340px;
+        display: flex;
+        flex-direction: column;
+        padding: 0.6rem 0.8rem;
+    }
+
+    #terminal-header {
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-green);
+        margin-bottom: 0.4rem;
+        border-bottom: 1px solid rgba(0, 255, 170, 0.15);
+        padding-bottom: 0.25rem;
+    }
+
+    #terminal-body {
+        flex: 1;
+        overflow-y: auto;
+        font-size: 0.72rem;
+        line-height: 1.45;
+        color: var(--accent-green);
+    }
+
+    .term-line {
+        opacity: 0;
+        animation: termFadeIn 0.3s ease forwards;
+        margin-bottom: 0.15rem;
+        word-break: break-word;
+    }
+
+    .term-line.dim { color: var(--text-dim); }
+    .term-line.warn { color: #ffcc66; }
+    .term-line.err  { color: #ff5577; }
+
+    @keyframes termFadeIn {
+        to { opacity: 1; }
+    }
+
+    /* Top-right player stats */
+    #stats-panel {
+        position: absolute;
+        top: 3.2rem;
+        right: 1rem;
+        width: 220px;
+        padding: 0.6rem 0.8rem;
+    }
+
+    #stats-header {
+        font-size: 0.65rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+        padding-bottom: 0.25rem;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem;
+        padding: 0.25rem 0;
+    }
+
+    .stat-label {
+        color: var(--text-dim);
+    }
+
+    .stat-value {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .stat-value.glow {
+        text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+    }
+
+    /* Center floating title */
+    #center-title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        pointer-events: none;
+        transition: opacity 0.8s ease;
+    }
+
+    #center-title h1 {
+        font-size: 2.2rem;
+        font-weight: 300;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        text-shadow: 0 0 16px rgba(0, 229, 255, 0.35),
+                     0 0 32px rgba(0, 229, 255, 0.15);
+        margin-bottom: 0.5rem;
+    }
+
+    #center-title .subtitle {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    #center-title.fade-out {
+        opacity: 0;
+    }
+
+    /* Bottom move submission */
+    #move-bar {
+        position: absolute;
+        bottom: 2.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.9rem;
+    }
+
+    #move-bar input[type="text"] {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid var(--glass-border);
+        border-radius: 5px;
+        padding: 0.4rem 0.7rem;
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        width: 320px;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #move-bar input[type="text"]::placeholder {
+        color: var(--text-dim);
+    }
+
+    #move-bar input[type="text"]:focus {
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
+    }
+
+    #move-bar button {
+        background: rgba(0, 229, 255, 0.08);
+        border: 1px solid rgba(0, 229, 255, 0.25);
+        border-radius: 5px;
+        color: var(--accent-cyan);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.4rem 0.9rem;
+        cursor: pointer;
+        transition: background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #move-bar button:hover {
+        background: rgba(0, 229, 255, 0.18);
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+    }
+
+    /* Connection status dot */
+    #conn-status {
+        position: absolute;
+        top: 3.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.62rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        pointer-events: none;
+    }
+
+    #conn-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--text-dim);
+        box-shadow: 0 0 5px rgba(100, 200, 255, 0.3);
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #conn-dot.online {
+        background: var(--accent-green);
+        box-shadow: 0 0 6px rgba(0, 255, 170, 0.45);
+    }
+
+    #conn-dot.offline {
+        background: #ff5577;
+        box-shadow: 0 0 6px rgba(255, 85, 119, 0.45);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <!-- Three.js canvas container -->
+    <div id="scene-container"></div>
+
+    <!-- HUD overlay -->
+    <div id="hud-layer">
+        <!-- Connection status -->
+        <div id="conn-status">
+            <span id="conn-dot"></span>
+            <span id="conn-label">Sync</span>
+        </div>
+
+        <!-- Top-left: live terminal log -->
+        <div id="terminal-panel" class="hud-panel glass-panel">
+            <div id="terminal-header">Live Terminal</div>
+            <div id="terminal-body"></div>
+        </div>
+
+        <!-- Top-right: player stats -->
+        <div id="stats-panel" class="hud-panel glass-panel">
+            <div id="stats-header">Player Stats</div>
+            <div class="stat-row">
+                <span class="stat-label">Score</span>
+                <span id="stat-score" class="stat-value glow">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Rank</span>
+                <span id="stat-rank" class="stat-value">Novice</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Beads</span>
+                <span id="stat-beads" class="stat-value">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Moves</span>
+                <span id="stat-moves" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <!-- Center: floating title -->
+        <div id="center-title">
+            <h1>Glass Bead Game</h1>
+            <div class="subtitle">Castalian Order — v26</div>
+        </div>
+
+        <!-- Bottom: quick move submission -->
+        <div id="move-bar" class="hud-panel glass-panel">
+            <input id="move-input" type="text" placeholder="Submit a move… (e.g. Music → Math via Harmony)" autocomplete="off" />
+            <button id="move-submit">Transmit</button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    /* ---------- SocketIO ---------- */
+    const socket = io('/');
+    const connDot = document.getElementById('conn-dot');
+    const connLabel = document.getElementById('conn-label');
+
+    socket.on('connect', () => {
+        connDot.classList.add('online');
+        connDot.classList.remove('offline');
+        connLabel.textContent = 'Online';
+    });
+
+    socket.on('disconnect', () => {
+        connDot.classList.remove('online');
+        connDot.classList.add('offline');
+        connLabel.textContent = 'Offline';
+    });
+
+    /* ---------- Center title fade on interaction ---------- */
+    const centerTitle = document.getElementById('center-title');
+    let titleFadeTimeout;
+
+    function fadeTitle() {
+        if (!centerTitle.classList.contains('fade-out')) {
+            centerTitle.classList.add('fade-out');
+        }
+        clearTimeout(titleFadeTimeout);
+    }
+
+    // Fade on any pointer interaction with the scene or HUD
+    document.addEventListener('pointerdown', fadeTitle);
+    document.addEventListener('wheel', fadeTitle);
+    document.addEventListener('keydown', fadeTitle);
+
+    // Optional: restore title after long inactivity
+    function maybeRestoreTitle() {
+        titleFadeTimeout = setTimeout(() => {
+            centerTitle.classList.remove('fade-out');
+        }, 60000);
+    }
+    document.addEventListener('pointerup', maybeRestoreTitle);
+
+    /* ---------- Quick move submission ---------- */
+    const moveInput = document.getElementById('move-input');
+    const moveSubmit = document.getElementById('move-submit');
+
+    function submitMove() {
+        const text = moveInput.value.trim();
+        if (!text) return;
+        socket.emit('move_submit', { text: text, timestamp: Date.now() });
+        moveInput.value = '';
+    }
+
+    moveSubmit.addEventListener('click', submitMove);
+    moveInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitMove();
+    });
+</script>
+
+<!-- Application scripts -->
+    <!-- 3D Scene module (auto-inits via import map) -->
+    <script type="module" src="{{ url_for('static', filename='js/3d-scene.js') }}"></script>
+<script src="{{ url_for('static', filename='js/live-terminal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/game-logic.js') }}"></script>
+{% endblock %}

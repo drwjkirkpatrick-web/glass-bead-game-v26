@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Audience — Glass Bead Game v26{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Audience dashboard layout */
+    #audience-dashboard {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* 3D scene — passive viewing, no interaction */
+    #scene-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    /* Left panel: Terminal log */
+    #terminal-panel {
+        position: absolute;
+        top: 3.2rem;
+        left: 1rem;
+        width: 320px;
+        max-height: calc(50% - 3.5rem);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #terminal-header {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 0.5rem;
+    }
+
+    #terminal-log {
+        flex: 1;
+        overflow-y: auto;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        max-height: 220px;
+    }
+
+    .log-entry {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.15rem 0;
+        opacity: 0;
+        animation: fade-in 0.3s ease forwards;
+    }
+
+    .log-entry .timestamp {
+        color: var(--text-dim);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .log-entry.terminal-move .message {
+        color: var(--accent-green);
+    }
+
+    .log-entry.terminal-warn .message {
+        color: #ffd700;
+    }
+
+    .log-entry.terminal-error .message {
+        color: #ff6b6b;
+    }
+
+    /* Right panel: Scoreboard */
+    #scoreboard-panel {
+        position: absolute;
+        top: 3.2rem;
+        right: 1rem;
+        width: 260px;
+        max-height: calc(50% - 3.5rem);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #scoreboard-header {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #scoreboard-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+        overflow-y: auto;
+        max-height: 220px;
+    }
+
+    .scoreboard-row {
+        display: grid;
+        grid-template-columns: 2rem 1fr 3rem;
+        align-items: center;
+        padding: 0.4rem 0.5rem;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(0, 229, 255, 0.06);
+        font-size: 0.75rem;
+        transition: background 0.2s ease;
+    }
+
+    .scoreboard-row:hover {
+        background: rgba(0, 229, 255, 0.06);
+    }
+
+    .scoreboard-rank {
+        font-weight: 700;
+        color: var(--accent-cyan);
+        text-align: center;
+    }
+
+    .scoreboard-name {
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .scoreboard-score {
+        text-align: right;
+        color: var(--accent-green);
+        font-weight: 600;
+    }
+
+    /* Bottom panel: Move feed */
+    #move-feed-panel {
+        position: absolute;
+        bottom: 2.2rem;
+        left: 1rem;
+        right: 1rem;
+        height: 160px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #move-feed-header {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    #move-feed-list {
+        display: flex;
+        gap: 0.6rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 0.3rem;
+    }
+
+    .move-card {
+        flex-shrink: 0;
+        width: 220px;
+        padding: 0.7rem;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 229, 255, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+        opacity: 0;
+        animation: fade-in 0.4s ease forwards;
+    }
+
+    .move-card:hover {
+        border-color: rgba(0, 229, 255, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .move-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.7rem;
+    }
+
+    .move-bead {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 0.3rem;
+        box-shadow: 0 0 6px currentColor;
+    }
+
+    .move-domain {
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 0.6rem;
+    }
+
+    .move-concepts {
+        font-size: 0.75rem;
+        color: var(--text-primary);
+        line-height: 1.4;
+    }
+
+    .move-concepts .arrow {
+        color: var(--text-dim);
+        margin: 0 0.2rem;
+    }
+
+    .move-meta {
+        font-size: 0.65rem;
+        color: var(--text-dim);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .move-score {
+        color: var(--accent-green);
+        font-weight: 600;
+    }
+
+    /* Audio panel */
+    #audio-panel {
+        position: absolute;
+        bottom: 2.2rem;
+        right: 1rem;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.5rem 0.8rem;
+    }
+
+    #audio-panel label {
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+    }
+
+    .audio-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 229, 255, 0.2);
+        background: rgba(0, 229, 255, 0.06);
+        color: var(--accent-cyan);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+    }
+
+    .audio-btn:hover {
+        background: rgba(0, 229, 255, 0.15);
+        border-color: rgba(0, 229, 255, 0.4);
+        box-shadow: 0 0 10px rgba(0, 229, 255, 0.15);
+    }
+
+    /* Domain colours for beads */
+    .domain-musica       { color: var(--color-musica);       background: var(--color-musica); }
+    .domain-mathematica  { color: var(--color-mathematica);  background: var(--color-mathematica); }
+    .domain-historia     { color: var(--color-historia);     background: var(--color-historia); }
+    .domain-natura       { color: var(--color-natura);       background: var(--color-natura); }
+    .domain-lingua       { color: var(--color-lingua);       background: var(--color-lingua); }
+    .domain-philosophia  { color: var(--color-philosophia);  background: var(--color-philosophia); }
+    .domain-technologia  { color: var(--color-technologia);  background: var(--color-technologia); }
+    .domain-medicina     { color: var(--color-medicina);     background: var(--color-medicina); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="audience-dashboard">
+    <!-- 3D scene — passive viewing only -->
+    <div id="scene-container"></div>
+
+    <!-- Left panel: Live terminal log -->
+    <div id="terminal-panel" class="glass-panel">
+        <div id="terminal-header">&#9650; Terminal Log</div>
+        <div id="terminal-log"></div>
+    </div>
+
+    <!-- Right panel: Scoreboard -->
+    <div id="scoreboard-panel" class="glass-panel">
+        <div id="scoreboard-header">
+            <span>&#9733; Scoreboard</span>
+            <span class="text-dim" id="player-count">0 players</span>
+        </div>
+        <div id="scoreboard-grid"></div>
+    </div>
+
+    <!-- Bottom panel: Current move feed -->
+    <div id="move-feed-panel" class="glass-panel">
+        <div id="move-feed-header">
+            <span>&#9670; Recent Moves</span>
+            <span class="text-dim" id="move-count">0 moves</span>
+        </div>
+        <div id="move-feed-list"></div>
+    </div>
+
+    <!-- Audio panel -->
+    <div id="audio-panel" class="glass-panel">
+        <label>Sonification</label>
+        <button id="audio-toggle" class="audio-btn" title="Play/Pause Sonification">
+            &#9654;
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.DASHBOARD_TYPE = 'audience';
+</script>
+<script src="{{ url_for('static', filename='js/dashboards.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/3d-scene.js') }}"></script>
+{% endblock %}
