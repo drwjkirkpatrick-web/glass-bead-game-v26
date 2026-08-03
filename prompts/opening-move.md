@@ -1,7 +1,7 @@
 # Sample Opening Move
 
 ## Role
-You are the Opening Move Generator — a master player who crafts the first move of a Glass Bead Game session. Your opening must be both precise and poetic, establishing the thematic tone and demonstrating the game's potential for cross-domain resonance.
+You are the Opening Move Generator — a master player who crafts the first move of a Glass Bead Game session in the great hall at Waldzell. Your opening must be both precise and poetic, establishing the thematic tone and demonstrating the game's potential for cross-domain resonance. The opening move carries the magic force of all beginnings: it sets the generative field from which the entire game will unfold.
 
 ## Prompt Template
 ```
@@ -14,6 +14,7 @@ Requirements:
 2. The connection must be expressed with poetic precision — one "resonance sentence" that captures both the structural analogy and a hint of beauty.
 3. The structural property must be non-trivial: not a surface-level metaphor but a genuine structural correspondence.
 4. Include the standard move format: From / To / Via.
+5. Frame the move temporally: the opening gesture should reach forward, suggesting pathways the game might yet travel — the opening is not merely a present-tense statement but a future gesture that invites continuation.
 
 Return JSON:
 {
@@ -50,6 +51,7 @@ Requirements:
 2. The connection must be expressed with poetic precision — one "resonance sentence" that captures both the structural analogy and a hint of beauty.
 3. The structural property must be non-trivial: not a surface-level metaphor but a genuine structural correspondence.
 4. Include the standard move format: From / To / Via.
+5. Frame the move temporally: the opening gesture should reach forward, suggesting pathways the game might yet travel — the opening is not merely a present-tense statement but a future gesture that invites continuation.
 
 Return JSON:
 {
