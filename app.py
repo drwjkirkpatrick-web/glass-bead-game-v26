@@ -376,6 +376,160 @@ def check_play_mode():
     can_transition, reason = prog.transition_to_public()
     return jsonify({"can_transition": can_transition, "reason": reason, "current_mode": str(prog.current_mode)})
 
+# ─── Strategy Improvement APIs ─────────────────────────
+
+# Lazy imports — modules are created by background subagents
+
+# 1. Player Identity
+@app.route('/api/player/current', methods=['GET'])
+def get_current_player():
+    """Return the current player's Castalian Identity Card."""
+    from src.player_identity import PlayerIdentity
+    p = PlayerIdentity(name='Joseph Knecht', rank='Ludi Magister', province='Waldzell')
+    p.add_verified_move(); p.add_verified_move(); p.add_contemplation_hours(10)
+    p.domain_mastery['musica'] = 0.95
+    p.domain_mastery['mathematica'] = 0.88
+    return jsonify(p.to_dict())
+
+@app.route('/api/player/<name>', methods=['GET'])
+def get_player(name):
+    from src.player_identity import PlayerIdentity
+    p = PlayerIdentity(name=name)
+    return jsonify(p.to_dict())
+
+# 2. Move Repertoire
+@app.route('/api/repertoire/current', methods=['GET'])
+def get_repertoire():
+    """Return the current player's move archive."""
+    from src.repertoire import Repertoire
+    rep = Repertoire()
+    rep.add_move({'from_concept': 'Z_12', 'to_concept': 'Circle of fifths', 'isomorphism': 'cyclic', 'score': 0.92, 'date': '2026-08-01'})
+    rep.add_move({'from_concept': 'Fourier', 'to_concept': 'Overtone', 'isomorphism': 'fourier', 'score': 0.97, 'date': '2026-08-01'})
+    return jsonify(rep.to_dict())
+
+# 3. The Pulse
+@app.route('/api/pulse', methods=['GET'])
+def get_pulse():
+    """Live move stream with trending domains."""
+    from src.pulse import MoveFeed
+    feed = MoveFeed()
+    return jsonify({'moves': feed.get_recent(), 'trending': feed.get_trending_domains()})
+
+@app.route('/api/pulse/trending', methods=['GET'])
+def get_trending():
+    from src.pulse import MoveFeed
+    return jsonify(MoveFeed().get_trending_domains())
+
+# 4. Hermes Critic
+@app.route('/api/critic/analyze', methods=['POST'])
+def critic_analyze():
+    """Pre-submission move analysis."""
+    from src.critic import CriticEngine
+    data = request.get_json() or {}
+    result = CriticEngine().analyze_move(data)
+    return jsonify(result)
+
+# 5. Tournament
+@app.route('/api/tournament/current', methods=['GET'])
+def get_tournament():
+    """Current Ludus Sollemnis bracket."""
+    from src.tournament import Tournament, FestivalType
+    t = Tournament(tournament_id='sollemnis-2026', festival_type=FestivalType.LUDUS_SOLLEMNIS)
+    t.seed_players([
+        {'name': 'Joseph Knecht', 'rank': 0.96},
+        {'name': 'Fritz Tegularius', 'rank': 0.87},
+        {'name': 'Master Thomas', 'rank': 0.95},
+        {'name': 'Plinio Designori', 'rank': 0.89},
+    ])
+    return jsonify(t.to_dict())
+
+# 6. Bead Library
+@app.route('/api/beads', methods=['GET'])
+def get_beads():
+    from src.bead_library import BeadCatalog
+    catalog = BeadCatalog()
+    catalog.add_bead('Z_12', 'mathematica', '#ff3333', 'Z_n under + mod n')
+    catalog.add_bead('Circle of Fifths', 'musica', '#3399ff', 'P5^12 ≡ tonic')
+    catalog.add_bead('Fourier Transform', 'mathematica', '#ff6600', '∫ f(t)e^{-iωt}dt', popularity=0.88)
+    return jsonify(catalog.to_dict())
+
+# 7. Sonification
+@app.route('/api/sonify/state', methods=['GET'])
+def sonify_state():
+    from src.sonification import SonificationEngine
+    return jsonify(SonificationEngine().sonify_state({'active_domains': ['musica', 'mathematica']}))
+
+@app.route('/api/sonify/move', methods=['POST'])
+def sonify_move():
+    from src.sonification import SonificationEngine
+    data = request.get_json() or {}
+    return jsonify(SonificationEngine().sonify_move(data.get('from_domain', ''), data.get('to_domain', ''), data.get('confidence', 0.8)))
+
+# 8. Pathfinder
+@app.route('/api/pathfinder', methods=['POST'])
+def pathfinder():
+    from src.pathfinder import GraphPathfinder
+    pf = GraphPathfinder()
+    for n in game_state['nodes']:
+        pf.add_node(n)
+    for e in game_state['edges']:
+        pf.add_edge(e)
+    data = request.get_json() or {}
+    return jsonify(pf.find_path(data.get('from', ''), data.get('to', '')))
+
+@app.route('/api/pathfinder/random', methods=['GET'])
+def random_path():
+    import random
+    from src.pathfinder import GraphPathfinder
+    pf = GraphPathfinder()
+    for n in game_state['nodes']:
+        pf.add_node(n)
+    for e in game_state['edges']:
+        pf.add_edge(e)
+    nodes = list(pf.nodes.keys())
+    if len(nodes) < 2:
+        return jsonify({'error': 'Not enough nodes'})
+    a, b = random.sample(nodes, 2)
+    return jsonify(pf.find_path(a, b))
+
+# 9. Replay
+@app.route('/api/replay/latest', methods=['GET'])
+def get_latest_replay():
+    from src.replay import GameRecording
+    return jsonify(GameRecording().to_dict())
+
+@app.route('/api/replay/<replay_id>', methods=['GET'])
+def get_replay(replay_id):
+    from src.replay import GameRecording
+    return jsonify(GameRecording().to_dict())
+
+# 10. Matchmaking
+@app.route('/api/matchmaking/find', methods=['POST'])
+def find_match():
+    from src.matchmaking import Matchmaker
+    mm = Matchmaker()
+    mm.add_player('Joseph Knecht', {'musica': 0.9, 'mathematica': 0.8, 'historia': 0.5, 'philosophia': 0.6})
+    mm.add_player('Fritz Tegularius', {'philosophia': 0.9, 'historia': 0.8, 'musica': 0.4, 'mathematica': 0.3})
+    mm.add_player('Master Thomas', {'musica': 0.95, 'mathematica': 0.7, 'historia': 0.7, 'philosophia': 0.5})
+    data = request.get_json() or {}
+    return jsonify(mm.find_match(data.get('player', '')))
+
+@app.route('/api/matchmaking/compatibility/<a>/<b>', methods=['GET'])
+def compatibility(a, b):
+    from src.matchmaking import Matchmaker
+    mm = Matchmaker()
+    mm.add_player('Joseph Knecht', {'musica': 0.9, 'mathematica': 0.8, 'historia': 0.5, 'philosophia': 0.6})
+    mm.add_player('Fritz Tegularius', {'philosophia': 0.9, 'historia': 0.8, 'musica': 0.4, 'mathematica': 0.3})
+    mm.add_player('Master Thomas', {'musica': 0.95, 'mathematica': 0.7, 'historia': 0.7, 'philosophia': 0.5})
+    return jsonify({'player_a': a, 'player_b': b, 'compatibility': mm.get_compatibility(a, b)})
+
+# ─── New Dashboard Route ────────────────────────────────
+
+@app.route('/dashboard')
+def dashboard():
+    """Unified strategy dashboard with all 10 panels."""
+    return render_template('dashboard.html')
+
 # ─── SocketIO Events ────────────────────────────────────
 
 @socketio.on('connect')

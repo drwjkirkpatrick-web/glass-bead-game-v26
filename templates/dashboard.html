@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Strategy Dashboard — Glass Bead Game v26{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panels.css') }}">
+{% endblock %}
+
+{% block content %}
+<div id="strategy-dashboard">
+    <div class="dashboard-header">
+        <h1>STRATEGY DASHBOARD</h1>
+        <p>Ten panels for mastery of the Glass Bead Game</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Row 1 -->
+        <div class="dash-card" id="identity-card"></div>
+        <div class="dash-card" id="repertoire-card"></div>
+        <div class="dash-card" id="pulse-card"></div>
+
+        <!-- Row 2 -->
+        <div class="dash-card" id="critic-card"></div>
+        <div class="dash-card" id="tournament-card"></div>
+        <div class="dash-card" id="library-card"></div>
+
+        <!-- Row 3 -->
+        <div class="dash-card" id="sonification-card"></div>
+        <div class="dash-card" id="pathfinder-card"></div>
+        <div class="dash-card" id="replay-card"></div>
+
+        <!-- Row 4 -->
+        <div class="dash-card wide" id="matchmaking-card"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/identity-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/repertoire-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pulse-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/critic-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tournament-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/library-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sonification-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/pathfinder-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/replay-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matchmaking-panel.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.IdentityPanel) IdentityPanel.init('identity-card');
+        if (window.RepertoirePanel) RepertoirePanel.init('repertoire-card');
+        if (window.PulsePanel) PulsePanel.init('pulse-card', window.socket);
+        if (window.CriticPanel) CriticPanel.init('critic-card');
+        if (window.TournamentPanel) TournamentPanel.init('tournament-card');
+        if (window.BeadLibraryPanel) BeadLibraryPanel.init('library-card');
+        if (window.SonificationPanel) SonificationPanel.init('sonification-card');
+        if (window.PathfinderPanel) PathfinderPanel.init('pathfinder-card');
+        if (window.ReplayPanel) ReplayPanel.init('replay-card');
+        if (window.MatchmakingPanel) MatchmakingPanel.init('matchmaking-card');
+    });
+</script>
+{% endblock %}
