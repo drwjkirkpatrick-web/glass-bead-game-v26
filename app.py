@@ -432,6 +432,145 @@ def pathway_adjacency():
     return jsonify(selector.get_domain_adjacency())
 
 
+# ─── Bead Agent & Skill Tree APIs ─────────────────────────────
+
+from src.bead_skills import get_skill_tree, SkillTier
+from src.bead_agents import (
+    get_agent, get_all_agents, agent_refact, execute_skill,
+    get_agent_skills, agent_to_dict, all_agents_overview,
+    get_skill_executor,
+)
+
+@app.route('/api/agents', methods=['GET'])
+def list_all_agents():
+    """List all 9 bead agents with their skills."""
+    return jsonify({
+        'total': len(get_all_agents()),
+        'agents': all_agents_overview(),
+    })
+
+@app.route('/api/agents/<domain>', methods=['GET'])
+def get_agent_info(domain):
+    """Get full info for a single bead agent."""
+    info = agent_to_dict(domain)
+    if info is None:
+        return jsonify({"error": f"Unknown domain: {domain}"}), 404
+    return jsonify(info)
+
+@app.route('/api/agents/<domain>/skills', methods=['GET'])
+def list_agent_skills(domain):
+    """List all skills for a bead agent, with unlock status."""
+    unlocked_only = request.args.get('unlocked') == 'true'
+    skills = get_agent_skills(domain, unlocked_only=unlocked_only)
+    return jsonify({
+        'domain': domain,
+        'count': len(skills),
+        'skills': skills,
+    })
+
+@app.route('/api/agents/<domain>/refract', methods=['POST'])
+def agent_refract_concept(domain):
+    """Invoke a bead agent's core refraction skill on a concept."""
+    data = request.get_json() or {}
+    result = agent_refact(
+        domain=domain,
+        concept=data.get('concept', ''),
+        source_domain=data.get('source_domain', ''),
+    )
+    log_to_terminal(f"Agent[{domain}]: refracted '{data.get('concept', '')}'", 'move')
+    return jsonify(result)
+
+@app.route('/api/skills/tree', methods=['GET'])
+def get_skill_tree_overview():
+    """Full skill tree overview — all 45 skills across 9 domains."""
+    tree = get_skill_tree()
+    return jsonify(tree.get_tree_overview())
+
+@app.route('/api/skills/unlock', methods=['POST'])
+def evaluate_skill_unlocks():
+    """Evaluate which skills unlock given player stats."""
+    data = request.get_json() or {}
+    tree = get_skill_tree()
+    unlocked = tree.evaluate_unlocks(
+        verified_moves=data.get('verified_moves', 0),
+        domain_mastery=data.get('domain_mastery', {}),
+        contemplation_hours=data.get('contemplation_hours', 0),
+        domain_contemplation=data.get('domain_contemplation', {}),
+    )
+    return jsonify({
+        'unlocked_count': len(unlocked),
+        'unlocked': sorted(unlocked),
+    })
+
+@app.route('/api/skills/<skill_id>', methods=['GET'])
+def get_skill_info(skill_id):
+    """Get details of a single skill."""
+    tree = get_skill_tree()
+    skill = tree.get_skill(skill_id)
+    if not skill:
+        return jsonify({"error": f"Unknown skill: {skill_id}"}), 404
+    return jsonify({
+        **skill.to_dict(),
+        "unlocked": tree.is_unlocked(skill_id),
+    })
+
+@app.route('/api/skills/execute', methods=['POST'])
+def execute_bead_skill():
+    """Execute a single bead agent skill."""
+    data = request.get_json() or {}
+    skill_id = data.get('skill_id', '')
+    inputs = data.get('inputs', {})
+    result = execute_skill(skill_id, inputs)
+    log_to_terminal(f"Skill executed: {skill_id}", 'move')
+    return jsonify(result)
+
+@app.route('/api/trace-program/create', methods=['POST'])
+def create_trace_program():
+    """Create a reusable trace program from a sequence of bead skills."""
+    data = request.get_json() or {}
+    tree = get_skill_tree()
+    try:
+        program = tree.create_trace_program(
+            name=data.get('name', ''),
+            steps=data.get('steps', []),
+        )
+        log_to_terminal(f"Trace program created: {program['program_id']}", 'system')
+        return jsonify(program)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/trace-program/<program_id>', methods=['GET'])
+def get_trace_program(program_id):
+    """Retrieve a saved trace program."""
+    tree = get_skill_tree()
+    program = tree.get_trace_program(program_id)
+    if not program:
+        return jsonify({"error": f"Unknown trace program: {program_id}"}), 404
+    return jsonify(program)
+
+@app.route('/api/trace-programs', methods=['GET'])
+def list_trace_programs():
+    """List all saved trace programs."""
+    tree = get_skill_tree()
+    return jsonify({
+        'count': len(tree.list_trace_programs()),
+        'programs': tree.list_trace_programs(),
+    })
+
+@app.route('/api/trace-program/<program_id>/execute', methods=['POST'])
+def execute_trace_program(program_id):
+    """Execute a trace program with initial inputs."""
+    data = request.get_json() or {}
+    tree = get_skill_tree()
+    result = tree.execute_trace_program(
+        program_id=program_id,
+        initial_inputs=data.get('inputs', {}),
+        skill_executor=get_skill_executor(),
+    )
+    log_to_terminal(f"Trace program executed: {program_id}", 'move')
+    return jsonify(result)
+
+
 # ─── Gap Module APIs ─────────────────────────────────────
 
 @app.route('/api/theme/build', methods=['POST'])

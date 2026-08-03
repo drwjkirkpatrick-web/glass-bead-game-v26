@@ -265,7 +265,7 @@ python -m pytest tests/test_*_transformer.py -o 'addopts=' -q
 python tests/test_math_philosophy_transformer.py
 ```
 
-Total: 702 tests across the project (284 new tests from the 8 Coda transformers + pathway selector).
+Total: 996 tests across the project (294 new tests from bead skill tree + agent system).
 
 ---
 
@@ -467,10 +467,98 @@ The `prompts/` directory contains testable LLM prompt templates:
 | 9 | `knecht-protocol.md` | Servant framing, tension-not-verdict |
 | 10 | `opening-move.md` | Temporal framing, beginnings magic |
 | 11 | `math-music-transformer.md` | 30 testable transformer prompts |
+| 12 | `bead-skill-tree.md` | 30 testable bead agent skill prompts |
 
 See `PROMPT_REFINEMENTS.md` for 30 book-grounded updates to prompt nuance.
 
 See `GAP_ANALYSIS.md` for the complete textual analysis of what Hesse's book describes vs. what we had built.
+
+---
+
+## Bead Agent Skill Tree
+
+Each glass bead in the Game is a **Hermes agent** — a specialized disciplinary intelligence that receives concepts, refracts them through its native lens, and maps cross-domain tension to musical intervals. The **Skill Tree** system gives each agent unlockable, reusable skills that compose into custom **trace programs** — player-defined pipelines that chain operations across domains.
+
+### Architecture
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Skill Tree | `src/bead_skills.py` | 45 skills across 9 domains, 3 tiers, unlock logic, trace programs |
+| Bead Agents | `src/bead_agents.py` | 9 agent definitions, skill executors, refraction dispatcher |
+| Prompts | `prompts/bead-skill-tree.md` | 30 testable LLM prompt templates for every skill |
+
+### 9 Bead Agents
+
+| Agent | Domain | Icon | Color | Skills |
+|-------|--------|------|-------|--------|
+| Magister Musicae | musica | ♪ | #00e5ff | 5 |
+| Magister Mathematicae | mathematica | ∑ | #ff00ff | 5 |
+| Magister Historiae | historia | ⌛ | #ffd700 | 5 |
+| Magister Naturae | natura | ⚛ | #00ff7f | 5 |
+| Magister Linguae | lingua | ✎ | #ff6b6b | 5 |
+| Magister Philosophiae | philosophia | ◊ | #9370db | 5 |
+| Magister Technologiae | technologia | ⚙ | #ffa500 | 5 |
+| Magister Medicinae | medicina | ✚ | #ff69b4 | 5 |
+| Magister Codae | coda | ⌘ | #39ff14 | 5 |
+
+### Skill Tiers
+
+| Tier | Count | Unlock Requirement | Example |
+|------|-------|--------------------|---------|
+| CORE | 18 (2 per domain) | Always available | `musica.refract`, `mathematica.prove` |
+| ADVANCED | 18 (2 per domain) | 5 verified moves in domain (mastery ≥ 0.3) | `musica.counterpoint`, `coda.debug` |
+| MASTER | 9 (1 per domain) | 15 moves + 3 contemplation hours (mastery ≥ 0.7) | `musica.composition_engine`, `coda.trace_program` |
+
+### Trace Programs
+
+Players can build **custom reusable trace programs** — pipelines that chain bead agent skills across multiple domains:
+
+```bash
+# Create a trace program: refract through musica → prove in mathematica → synthesize in philosophia
+curl -X POST http://localhost:9297/api/trace-program/create \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Cross-Domain Synthesis",
+    "steps": [
+      {"skill_id": "musica.refract", "input_mapping": {"concept": "fugue", "source_domain": "mathematica"}},
+      {"skill_id": "mathematica.prove", "input_mapping": {"claim": "step[0].output.translation", "domain_a": "musica", "domain_b": "mathematica"}},
+      {"skill_id": "philosophia.refract", "input_mapping": {"concept": "step[1].output.formal_rule", "source_domain": "mathematica"}}
+    ]
+  }'
+
+# Execute it
+curl -X POST http://localhost:9297/api/trace-program/trace_cross_domain_synthesis_0/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"inputs": {"fugue": "Bach Musical Offering"}}'
+```
+
+### Agent & Skill API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/agents` | GET | List all 9 bead agents with skills |
+| `/api/agents/<domain>` | GET | Full info for one agent |
+| `/api/agents/<domain>/skills` | GET | List skills (?unlocked=true for unlocked only) |
+| `/api/agents/<domain>/refract` | POST | Invoke core refraction on a concept |
+| `/api/skills/tree` | GET | Full 45-skill tree overview |
+| `/api/skills/unlock` | POST | Evaluate unlocks from player stats |
+| `/api/skills/<skill_id>` | GET | Details for one skill |
+| `/api/skills/execute` | POST | Execute a single skill |
+| `/api/trace-program/create` | POST | Create a reusable trace program |
+| `/api/trace-program/<id>` | GET | Retrieve a saved program |
+| `/api/trace-programs` | GET | List all saved programs |
+| `/api/trace-program/<id>/execute` | POST | Execute a trace program |
+
+### 30 Testable Prompts
+
+The `prompts/bead-skill-tree.md` file contains 30 testable LLM prompt templates:
+
+| Range | Category | Example Skill |
+|-------|----------|--------------|
+| 1–9 | CORE refraction (one per domain) | `musica.refract`, `coda.refract` |
+| 10–18 | ADVANCED skills (one per domain) | `mathematica.symmetry`, `natura.evolve` |
+| 19–27 | MASTER skills (one per domain) | `philosophia.synthesis_engine`, `medicina.treatment_plan` |
+| 28–30 | Trace program chaining (multi-domain) | 3-step and 4-step pipelines |
 
 ---
 
