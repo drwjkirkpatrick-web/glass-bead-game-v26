@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-panels.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/knowledge-transformer-panel.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -32,6 +33,24 @@
         <!-- Row 4 -->
         <div class="dash-card wide" id="matchmaking-card"></div>
     </div>
+
+    <!-- Knowledge Transformers Section -->
+    <div class="dashboard-header" style="margin-top: 2rem;">
+        <h1>KNOWLEDGE TRANSFORMERS</h1>
+        <p>Ten bidirectional domain-pair transformers — find the thread between any two fields</p>
+    </div>
+    <div class="dashboard-grid">
+        <div class="dash-card kt-transformer-card" id="kt-card-0"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-1"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-2"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-3"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-4"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-5"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-6"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-7"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-8"></div>
+        <div class="dash-card kt-transformer-card" id="kt-card-9"></div>
+    </div>
 </div>
 {% endblock %}
 
@@ -46,6 +65,7 @@
 <script src="{{ url_for('static', filename='js/pathfinder-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/replay-panel.js') }}"></script>
 <script src="{{ url_for('static', filename='js/matchmaking-panel.js') }}"></script>
+<script src="{{ url_for('static', filename='js/knowledge-transformer-panel.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         if (window.IdentityPanel) IdentityPanel.init('identity-card');
@@ -58,6 +78,13 @@
         if (window.PathfinderPanel) PathfinderPanel.init('pathfinder-card');
         if (window.ReplayPanel) ReplayPanel.init('replay-card');
         if (window.MatchmakingPanel) MatchmakingPanel.init('matchmaking-card');
+        // Knowledge Transformers — 10 domain-pair panels
+        if (window.KnowledgeTransformerPanel && window.KnowledgeTransformerPanel.TRANSFORMERS) {
+            window.KnowledgeTransformerPanel.TRANSFORMERS.forEach(function(cfg, i) {
+                var cardId = 'kt-card-' + i;
+                window.KnowledgeTransformerPanel.init(cardId, cfg);
+            });
+        }
     });
 </script>
 {% endblock %}

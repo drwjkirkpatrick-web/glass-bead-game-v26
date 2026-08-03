@@ -264,6 +264,89 @@ def transform_entropy():
     entropy = -sum((c/total) * math.log2(c/total) for c in counts.values())
     return jsonify({"entropy": round(entropy, 3), "peak_stage": data.get('current_stage', 'UNKNOWN')})
 
+# ─── Knowledge Transformer APIs (10 domain-pair transformers) ─────────────
+# Each transformer follows the same pattern as the Math↔Music transformer above:
+# POST  /api/transform/<pair>         → single transformation
+# GET   /api/transform/<pair>/catalog → browse isomorphisms
+
+from src.math_philosophy_transformer import get_transformer as get_mp_transformer
+from src.music_language_transformer import get_transformer as get_ml_transformer
+from src.history_philosophy_transformer import get_transformer as get_hp_transformer
+from src.nature_math_transformer import get_transformer as get_nm_transformer
+from src.philosophy_language_transformer import get_transformer as get_pl_transformer
+from src.nature_music_transformer import get_transformer as get_nmu_transformer
+from src.technology_math_transformer import get_transformer as get_tm_transformer
+from src.medicine_nature_transformer import get_transformer as get_mn_transformer
+from src.history_music_transformer import get_transformer as get_hm_transformer
+from src.philosophy_music_transformer import get_transformer as get_pmu_transformer
+
+_KT_REGISTRY = {
+    'math-philosophy':    get_mp_transformer,
+    'music-language':     get_ml_transformer,
+    'history-philosophy': get_hp_transformer,
+    'nature-math':        get_nm_transformer,
+    'philosophy-language': get_pl_transformer,
+    'nature-music':       get_nmu_transformer,
+    'technology-math':    get_tm_transformer,
+    'medicine-nature':     get_mn_transformer,
+    'history-music':       get_hm_transformer,
+    'philosophy-music':    get_pmu_transformer,
+}
+
+
+@app.route('/api/transform/<pair>', methods=['POST'])
+def transform_knowledge_pair(pair):
+    """Execute a single knowledge-pair transformation."""
+    if pair not in _KT_REGISTRY:
+        return jsonify({"error": f"Unknown transformer pair: {pair}"}), 404
+    data = request.get_json() or {}
+    transformer = _KT_REGISTRY[pair]()
+    result = transformer.transform(
+        origin_concept=data.get('origin_concept', ''),
+        origin_domain=data.get('origin_domain', ''),
+        destination_domain=data.get('destination_domain', ''),
+        structural_property=data.get('structural_property', ''),
+        resonance_sentence=data.get('resonance_sentence', ''),
+        tokens=data.get('tokens', []),
+    )
+    log_to_terminal(f"Transformer[{pair}]: {result.origin_concept} → {result.destination_concept} ({result.total_confidence})", 'move')
+    return jsonify(result.to_dict())
+
+
+@app.route('/api/transform/<pair>/catalog', methods=['GET'])
+def get_kt_catalog(pair):
+    """Browse the isomorphism library for a knowledge-pair transformer."""
+    if pair not in _KT_REGISTRY:
+        return jsonify({"error": f"Unknown transformer pair: {pair}"}), 404
+    transformer = _KT_REGISTRY[pair]()
+    return jsonify(transformer.get_isomorphism_catalog())
+
+
+@app.route('/api/transform/<pair>/batch', methods=['POST'])
+def batch_transform_kt(pair):
+    """Batch transform multiple moves through a knowledge-pair transformer."""
+    if pair not in _KT_REGISTRY:
+        return jsonify({"error": f"Unknown transformer pair: {pair}"}), 404
+    data = request.get_json() or {}
+    moves = data.get('moves', [])
+    transformer = _KT_REGISTRY[pair]()
+    results = transformer.batch_transform(moves)
+    log_to_terminal(f"Batch[{pair}]: {len(results)} moves processed", 'system')
+    return jsonify([r.to_dict() for r in results])
+
+
+@app.route('/api/transform/all/catalog', methods=['GET'])
+def get_all_kt_catalogs():
+    """Browse all 10 knowledge transformer catalogs at once."""
+    catalogs = {}
+    for pair, get_fn in _KT_REGISTRY.items():
+        try:
+            catalogs[pair] = get_fn().get_isomorphism_catalog()
+        except Exception as exc:
+            catalogs[pair] = {"error": str(exc)}
+    return jsonify(catalogs)
+
+
 # ─── Gap Module APIs ─────────────────────────────────────
 
 @app.route('/api/theme/build', methods=['POST'])

@@ -61,6 +61,7 @@ Then open `http://localhost:9297/` in your browser.
 | 3D Scene | Three.js r160 (glass materials, starfield, grid) |
 | Music | VexFlow 4.x (SVG staff notation) |
 | Math | KaTeX 0.16.9 (LaTeX formula rendering) |
+| Transformers | 11 domain-pair isomorphism engines (Math↔Music + 10 knowledge transformers) |
 | Live Updates | WebSocket broadcasts via SocketIO rooms |
 | Styling | CSS glassmorphism, JetBrains Mono, dark terminal |
 
@@ -103,6 +104,119 @@ Each stage carries a **human language thread** — not decoration, but the struc
 | `/api/transform/batch` | POST | Batch transform |
 | `/api/transform/catalog` | GET | Browse 10 isomorphisms |
 | `/api/transform/entropy` | POST | Token entropy per stage |
+
+---
+
+## Knowledge Transformers: 10 Domain-Pair Transformers
+
+The Math ↔ Music transformer was the original. **Ten new knowledge transformers** extend this pattern across all eight Castalian domains, giving players a formal scaffold for finding the thread between any two fields.
+
+Each transformer follows the same architecture: 10 isomorphisms, 6-stage pipeline (PARSE → TAG → MAP → PROJECT → COMPOSE → VERIFY), confidence scoring, and Hesse-style resonance sentences.
+
+### The 10 Transformers
+
+| # | Transformer | Module | Domain Pair | Example Isomorphism |
+|---|------------|--------|-------------|---------------------|
+| 1 | Math ↔ Philosophy | `src/math_philosophy_transformer.py` | Mathematics ↔ Philosophy | Gödel incompleteness ↔ epistemological limits |
+| 2 | Music ↔ Language | `src/music_language_transformer.py` | Music ↔ Linguistics | Syntax tree ↔ voice-leading hierarchy |
+| 3 | History ↔ Philosophy | `src/history_philosophy_transformer.py` | History ↔ Philosophy | Hegelian dialectic ↔ dialectical historical process |
+| 4 | Nature ↔ Math | `src/nature_math_transformer.py` | Natural Sciences ↔ Mathematics | Fibonacci in plants ↔ recursive sequences |
+| 5 | Philosophy ↔ Language | `src/philosophy_language_transformer.py` | Philosophy ↔ Linguistics | Wittgenstein language games ↔ speech act theory |
+| 6 | Nature ↔ Music | `src/nature_music_transformer.py` | Nature ↔ Music | Birdsong intervals ↔ melodic ornamentation |
+| 7 | Technology ↔ Math | `src/technology_math_transformer.py` | Technology ↔ Mathematics | Boolean logic ↔ digital circuits |
+| 8 | Medicine ↔ Nature | `src/medicine_nature_transformer.py` | Medicine ↔ Nature | Immune system ↔ ecological balance |
+| 9 | History ↔ Music | `src/history_music_transformer.py` | History ↔ Music | Baroque era ↔ fugue/contrapuntal form |
+| 10 | Philosophy ↔ Music | `src/philosophy_music_transformer.py` | Philosophy ↔ Music | Pythagorean harmony of spheres ↔ tonal harmony |
+
+### How to Use the Transformers
+
+#### Via the Dashboard
+
+1. Open `/dashboard` and scroll to the **Knowledge Transformers** section
+2. Each card is one domain-pair transformer with:
+   - **Direction toggle** — swap which domain is origin vs. destination
+   - **Origin Concept** — the starting concept (pre-filled with a default)
+   - **Structural Property** — the formal property you see connecting the two
+   - **Resonance** — an optional poetic sentence (auto-generated if blank)
+3. Click **Transform** to run the 6-stage pipeline
+4. Watch the token stream, confidence gauge, and stage progression animate
+5. The result shows: destination concept, resonance sentence, isomorphism found, and the full language thread for each stage
+6. Click any isomorphism in the catalog to auto-fill the origin concept
+
+#### Via the API
+
+```bash
+# Single transformation
+curl -X POST http://localhost:9297/api/transform/math-philosophy \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "origin_concept": "Gödel incompleteness theorem",
+    "origin_domain": "Mathematics",
+    "destination_domain": "Philosophy",
+    "structural_property": "formal limits of self-reference",
+    "tokens": ["[INIT]", "[PARSE]", "[TAG]", "[MAP]", "[PROJECT]", "[COMPOSE]", "[VERIFY]"]
+  }'
+
+# Browse isomorphisms for a specific pair
+curl http://localhost:9297/api/transform/nature-math/catalog
+
+# All 10 catalogs at once
+curl http://localhost:9297/api/transform/all/catalog
+
+# Batch transform
+curl -X POST http://localhost:9297/api/transform/history-music/batch \
+  -H 'Content-Type: application/json' \
+  -d '{"moves": [{"from_concept": "Baroque era", "from_domain": "History", "to_domain": "Music", "structural_property": "structured complexity"}]}'
+```
+
+#### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/transform/<pair>` | POST | Single transformation (pair = `math-philosophy`, `music-language`, etc.) |
+| `/api/transform/<pair>/catalog` | GET | Browse 10 isomorphisms for that pair |
+| `/api/transform/<pair>/batch` | POST | Batch transform multiple moves |
+| `/api/transform/all/catalog` | GET | All 10 transformer catalogs at once |
+
+Valid `<pair>` values: `math-philosophy`, `music-language`, `history-philosophy`, `nature-math`, `philosophy-language`, `nature-music`, `technology-math`, `medicine-nature`, `history-music`, `philosophy-music`.
+
+### Choosing a Transformer for Your Move
+
+When planning a move that crosses domain boundaries, use the transformer for that pair:
+
+1. **Identify the two domains** your move connects (e.g., a move from a biological pattern to a mathematical structure → Nature ↔ Math)
+2. **Enter the origin concept** in its native terminology (e.g., "Fibonacci spirals in sunflowers")
+3. **Name the structural property** you see connecting them (e.g., "self-similar recursive growth")
+4. **Run the transformer** — it will find the best-matching isomorphism and generate the destination concept
+5. **Read the resonance sentence** — if it illuminates the connection, use it in your move's `resonance` field
+6. **Check the confidence** — below 0.70 means the isomorphism is tenuous; consider a different structural property
+
+### The 6-Stage Pipeline (All Transformers)
+
+Every transformer runs the same six stages, each carrying a human language thread:
+
+```
+PARSE   → Decompose the origin into structural primitives
+TAG     → Label each primitive with its formal type
+MAP     → Map primitives to the target domain via isomorphism
+PROJECT → Place mapped elements in target parameter space
+COMPOSE → Assemble projected elements into coherent structure
+VERIFY  → Check structural fidelity via inverse transformation
+```
+
+### Testing
+
+Each transformer has a dedicated test file with 20-30 tests:
+
+```bash
+# Run all transformer tests
+python -m pytest tests/test_*_transformer.py -o 'addopts=' -q
+
+# Run a specific transformer's tests
+python tests/test_math_philosophy_transformer.py
+```
+
+Total: 418 tests across the project (102 new tests from the 10 transformers).
 
 ---
 
@@ -260,7 +374,8 @@ Every third session triggers the **Knecht Protocol**: if no practical applicatio
 | Route | Purpose |
 |-------|---------|
 | `/` | Main 3D visualization + live terminal + quick move input |
-| `/gameplay` | Active move submission, Abacus Board, transformer panel, validation |
+| `/gameplay` | Active move submission, Abacus Board, Math↔Music transformer, 10 knowledge transformers, validation |
+| `/dashboard` | Strategy dashboard: 10 original panels + 10 knowledge transformer panels |
 | `/judges` | Scoring rubric, validation queue, Castalian flags, promotion table |
 | `/audience` | Read-only view with scoreboard and move feed |
 
