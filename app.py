@@ -264,6 +264,118 @@ def transform_entropy():
     entropy = -sum((c/total) * math.log2(c/total) for c in counts.values())
     return jsonify({"entropy": round(entropy, 3), "peak_stage": data.get('current_stage', 'UNKNOWN')})
 
+# ─── Gap Module APIs ─────────────────────────────────────
+
+@app.route('/api/theme/build', methods=['POST'])
+def build_theme():
+    """Build a fugue-like compositional arc (Theme → CounterSubject → Episode → Stretto → Coda)."""
+    from src.theme_engine import Theme, CounterSubject, Episode, Stretto, Coda, FugueBuilder
+    data = request.get_json() or {}
+    try:
+        builder = FugueBuilder()
+        builder.set_theme(Theme(concept=data.get('theme_concept', ''), domain=data.get('theme_domain', '')))
+        if data.get('counter_concept'):
+            builder.set_counter_subject(CounterSubject(
+                concept=data['counter_concept'],
+                relation=data.get('counter_relation', 'contrapuntal'),
+                direction=data.get('counter_direction', 'inverted'),
+            ))
+        if data.get('episode_themes'):
+            builder.add_episode(Episode(themes=data['episode_themes'], modulations=data.get('modulations', [])))
+        if data.get('stretto_themes'):
+            builder.add_stretto(Stretto(
+                themes=data['stretto_themes'],
+                compression=data.get('stretto_compression', 0.5),
+            ))
+        builder.set_coda(Coda(resolution=data.get('coda_resolution', 'return to tonic')))
+        move = builder.build()
+        log_to_terminal(f"Theme engine: built fugue for {move.theme.concept}", 'move')
+        return jsonify({"move": move.to_dict(), "narrative": builder.narrate()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/dialectic', methods=['POST'])
+def run_dialectic():
+    """Run a Thesis-Antithesis-Synthesis game."""
+    from src.dialectic_engine import DialecticGame
+    data = request.get_json() or {}
+    try:
+        game = DialecticGame(
+            thesis_concept=data.get('thesis', ''),
+            antithesis_concept=data.get('antithesis', ''),
+            thesis_domain=data.get('thesis_domain', ''),
+            antithesis_domain=data.get('antithesis_domain', ''),
+        )
+        synthesis = game.build()
+        scores = game.score_synthesis()
+        log_to_terminal(f"Dialectic: {synthesis.thesis.concept} + {synthesis.antithesis.concept} → synthesis", 'move')
+        return jsonify({"synthesis": synthesis.to_dict(), "scores": scores})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/contemplate', methods=['POST'])
+def contemplate():
+    """Begin or complete a formal contemplation session."""
+    from src.contemplation import ContemplationSession
+    data = request.get_json() or {}
+    session = ContemplationSession(player_name=data.get('player', 'Anonymous'))
+    for phase in ['preparation', 'recollection', 'concentration', 'insight', 'integration']:
+        if phase in data.get('phases', []):
+            session.complete_phase(phase, data.get(f'{phase}_notes', ''))
+    depth = session.compute_depth()
+    log_to_terminal(f"Contemplation: {session.player_name} — depth {depth}", 'move')
+    return jsonify({"session": session.to_dict(), "depth": depth})
+
+@app.route('/api/ceremony', methods=['POST'])
+def create_ceremony():
+    """Create a ceremonial match."""
+    from src.ceremony import Ceremony, Audience, FestivalType
+    data = request.get_json() or {}
+    try:
+        fest_type = FestivalType.LUDUS_SOLLEMNIS if data.get('type') == 'sollemnis' else FestivalType.LUDUS_ANNIVERSARIUS
+        ceremony = Ceremony(
+            magister_presiding=data.get('magister', ''),
+            festival_type=fest_type,
+            audience=Audience(size=data.get('audience_size', 100), reverence_score=data.get('reverence', 0.7)),
+        )
+        log_to_terminal(f"Ceremony: {ceremony.festival_type.name} under {ceremony.magister_presiding}", 'system')
+        return jsonify({"ceremony": ceremony.to_dict()})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route('/api/magister/evaluate', methods=['POST'])
+def magister_evaluate():
+    """Evaluate a game from the Ludi Magister perspective."""
+    from src.magister import Magister, GameEvaluation
+    data = request.get_json() or {}
+    magister = Magister(name=data.get('magister_name', 'Magister'))
+    evaluation = GameEvaluation(
+        technical_virtuosity=data.get('technical_virtuosity', 0.0),
+        contemplative_depth=data.get('contemplative_depth', 0.0),
+        synthesis_quality=data.get('synthesis_quality', 0.0),
+        ceremonial_presence=data.get('ceremonial_presence', 0.0),
+    )
+    magister.evaluate_player(data.get('player', ''), evaluation)
+    log_to_terminal(f"Magister {magister.name} evaluated {data.get('player', '')}: {evaluation.overall_score()}", 'move')
+    return jsonify({"evaluation": evaluation.to_dict(), "magister": magister.to_dict()})
+
+@app.route('/api/play-mode', methods=['POST'])
+def check_play_mode():
+    """Check or transition a player's play mode."""
+    from src.play_modes import PlayerProgression, PlayMode
+    data = request.get_json() or {}
+    prog = PlayerProgression(player_name=data.get('player', 'Test'))
+    # Simulate some progress
+    for _ in range(data.get('verified_moves', 0)):
+        prog.checklist.record_verified_move()
+    prog.checklist.contemplation_hours = data.get('contemplation_hours', 0)
+    for peer in data.get('peer_endorsements', []):
+        prog.checklist.add_peer_endorsement(peer)
+    if data.get('magister_reviewed'):
+        prog.checklist.magister_review = True
+    can_transition, reason = prog.transition_to_public()
+    return jsonify({"can_transition": can_transition, "reason": reason, "current_mode": str(prog.current_mode)})
+
 # ─── SocketIO Events ────────────────────────────────────
 
 @socketio.on('connect')

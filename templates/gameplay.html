@@ -576,6 +576,15 @@
     <!-- Math ↔ Music Transformer panel -->
     <div id="transformer-panel" class="glass-panel"></div>
 
+    <!-- Abacus Board (Bastian Perrot's original invention) -->
+    <div id="abacus-panel" class="glass-panel">
+        <div class="abacus-header">
+            <span class="abacus-title">Bastian Perrot's Abacus</span>
+            <span class="abacus-subtitle">"a frame with several dozen wires on which could be strung glass beads"</span>
+        </div>
+        <div id="abacus-container" style="width:100%; height:400px;"></div>
+    </div>
+
 </div>
 {% endblock %}
 
@@ -593,4 +602,20 @@
     });
 </script>
 <script type="module" src="{{ url_for('static', filename='js/3d-scene.js') }}"></script>
+<script src="{{ url_for('static', filename='js/abacus-board.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.AbacusBoard) {
+            window.AbacusBoard.init('abacus-container', {
+                wireCount: 13,
+                initialBeads: [
+                    {wireIndex: 0, concept: 'C — Tonic'},
+                    {wireIndex: 7, concept: 'G — Dominant'},
+                    {wireIndex: 4, concept: 'E — Mediant'},
+                    {wireIndex: 9, concept: 'A — Submediant'},
+                ]
+            });
+        }
+    });
+</script>
 {% endblock %}

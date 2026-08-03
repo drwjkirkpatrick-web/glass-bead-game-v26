@@ -66,12 +66,203 @@ Then open `http://localhost:9297/` in your browser.
 
 ---
 
+## The Math ↔ Music Transformer
+
+The twin grammars of the Game — mathematics and music — are not merely decorative. The **MathMusicTransformer** provides a **formal bidirectional scaffold** between mathematical structures and musical structures, with human language as the connecting thread.
+
+### 10 Core Isomorphisms
+
+| # | Mathematics | ↔ | Music | Confidence |
+|---|-------------|---|-------|------------|
+| 1 | Cyclic group Z₁₂ | ↔ | Circle of fifths | 97% |
+| 2 | Fourier decomposition | ↔ | Overtone series | 99% |
+| 3 | Recursive function | ↔ | Canon per tonos (Bach) | 96% |
+| 4 | Möbius strip | ↔ | Endless canon | 91% |
+| 5 | Dihedral symmetry Dₙ | ↔ | Motivic inversion + retrograde | 94% |
+| 6 | Eigenvalue λ | ↔ | Resonant frequency | 98% |
+| 7 | Fibonacci sequence | ↔ | Golden ratio phasing (Reich) | 89% |
+| 8 | Complete graph Kₙ | ↔ | Voice-leading space (Tymoczko) | 93% |
+| 9 | Category functor | ↔ | Orchestration / composition | 87% |
+| 10 | Topological space | ↔ | Tonal hierarchy (Lerdahl) | 90% |
+
+### 6-Stage Pipeline
+
+Every transformation walks these stages:
+
+```
+PARSE → TAG → MAP → PROJECT → COMPOSE → VERIFY
+```
+
+Each stage carries a **human language thread** — not decoration, but the structural carrier of intent across domain boundaries.
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/transform` | POST | Single math↔music transformation |
+| `/api/transform/batch` | POST | Batch transform |
+| `/api/transform/catalog` | GET | Browse 10 isomorphisms |
+| `/api/transform/entropy` | POST | Token entropy per stage |
+
+---
+
+## Gap Modules: What the Book Actually Describes
+
+Based on direct textual analysis of Hesse's *Das Glasperlenspiel* (Richard & Clara Winston translation), we identified and built the following missing systems:
+
+### 1. Theme Engine (`src/theme_engine.py`)
+
+The book describes moves as **compositional arcs** — not single edges but developments:
+
+> "One theme, two themes, or three themes were stated, elaborated, varied, and underwent a development quite similar to that of the theme in a Bach fugue or a concerto movement."
+
+**FugueBuilder** produces:
+- **Theme** — initial concept statement
+- **CounterSubject** — second concept in contrapuntal relation
+- **Episode** — modulatory development exploring relations
+- **Stretto** — overlapping/compressed restatement
+- **Coda** — synthesis and resolution
+
+API: `POST /api/theme/build`
+
+### 2. Dialectic Engine (`src/dialectic_engine.py`)
+
+The book describes a school of play that combines **hostile themes** into synthesis:
+
+> "One school of players... favored harmoniously combining two hostile themes or ideas, such as law and freedom, individual and community... to evolve out of thesis and antithesis the purest possible synthesis."
+
+Scoring dimensions:
+- **Equality** — both themes developed with equal weight
+- **Tension** — hostile concepts successfully reconciled
+- **Purity** — synthesis is emergent, not mere compromise
+
+API: `POST /api/dialectic`
+
+### 3. Contemplation Engine (`src/contemplation.py`)
+
+Formal meditation is **required** before certain moves:
+
+> "Each player was required to perform silent, formal meditation on the content, origin, and meaning of the Game... the art of contemplation and meditation was nurtured."
+
+**ContemplationSession** phases:
+1. **Preparation** — setting intention
+2. **Recollection** — reviewing prior moves
+3. **Concentration** — focusing on structure
+4. **Insight** — receiving the resonant connection
+5. **Integration** — returning with embodied understanding
+
+Depth scoring: contemplation time × phase completion × insight quality.
+
+API: `POST /api/contemplate`
+
+### 4. Ceremonial Match System (`src/ceremony.py`)
+
+Public matches are **cultural festivals**, not casual games:
+
+> "Official matches, played under the personal direction of the Ludi Magister, were exalted into cultural festivals... the Ludi Magister is a prince or high priest, almost a deity."
+
+**Festival types:**
+- **Ludus sollemnis** — annual public festival
+- **Ludus anniversarius** — anniversary celebration
+
+**Ceremonial phases** (sonata form):
+Prelude → Exposition → Development → Recapitulation → Coda
+
+Requirements: Ludi Magister presiding, public audience, formal meditation, reverence score.
+
+API: `POST /api/ceremony`
+
+### 5. Ludi Magister (`src/magister.py`)
+
+The Magister evaluates games on four dimensions:
+- **Technical virtuosity** — formal precision
+- **Contemplative depth** — meditation quality
+- **Synthesis quality** — unity beneath differences
+- **Ceremonial presence** — public festival performance
+
+**Successor training:** Every magister must train a successor (Knecht → Tito pattern).
+
+API: `POST /api/magister/evaluate`
+
+### 6. Private vs. Public Play (`src/play_modes.py`)
+
+> "To this day everyone is free to play the Game privately, and young people are encouraged... But the great public Games..."
+
+**Private play** — sandbox, no scoring, experimentation encouraged, contemplation optional.
+
+**Public play** — ceremonial, scored, judged by Magister, formal meditation required, audience present.
+
+**Progression requirements** (Private → Public):
+- ≥10 verified moves
+- ≥5 contemplation hours
+- 3 peer endorsements
+- Magister review passed
+
+API: `POST /api/play-mode`
+
+### 7. Abacus Board (`static/js/abacus-board.js`)
+
+The book's **original physical game** — Bastian Perrot's abacus:
+
+> "He constructed a frame, modeled on a child's abacus, a frame with several dozen wires on which could be strung glass beads of various sizes, shapes, and colors. The wires corresponded to the lines of the musical staff, the beads to the time-values of the notes..."
+
+Rendered in Canvas 2D with:
+- 13 chromatic wire rows (C to C)
+- Glass bead glow and pulse animation
+- Concept labels on each bead
+- Click-to-place interaction
+- Color-coded note system
+
+Visible on `/gameplay` dashboard.
+
+---
+
+## Game Strategy
+
+### The Three Schools of Play
+
+Hesse's text describes **three distinct approaches** to the Game:
+
+1. **The Virtuoso School** — rapid recollection of eternal forms, brief flights through realms of Mind. Favors speed, breadth, and display. Now discouraged in official play.
+
+2. **The Contemplative School** — silent formal meditation before each move. Favors depth, stillness, and "realization." The dominant mode in Castalia today.
+
+3. **The Dialectical School** — thesis + antithesis → synthesis. Combines hostile ideas (law/freedom, individual/community) with complete equality. The most difficult and most rewarding.
+
+### Opening Strategy
+
+The opening move should carry "the magic force of all beginnings":
+- Choose a theme that is **deeply familiar** to you (Bach fugue, a theorem, a poem)
+- State it in its **native notation** (music staff, equation, original language)
+- Do not rush to the counter-theme; let the single idea **resonate in solitude**
+- The opening is a **future gesture** — it reaches forward, inviting continuation
+
+### Midgame Strategy
+
+- **Episode phase**: Explore modulations. Move through related concepts before returning to the tonic theme.
+- **Use the MathMusicTransformer**: Every cross-domain move should check against the 10 isomorphisms. If none fit, the correspondence may be too tenuous.
+- **Contemplate before complex moves**: The book requires formal meditation. The ContemplationEngine assigns depth bonuses.
+
+### Endgame Strategy
+
+- **Stretto**: Compress and overlap earlier themes. Show that the same structure operates at multiple scales.
+- **Coda**: Return to the tonic — but **transformed**. The ending should not merely repeat the beginning; it should reveal what the beginning contained in seed form.
+- **Ceremonial closure**: If playing publicly, the final phase is judged on ceremonial presence, not just intellectual content.
+
+### The Knecht Protocol
+
+Every third session triggers the **Knecht Protocol**: if no practical application is identified, the session is flagged as *Castalian* — beautiful but existentially empty. As Joseph Knecht discovered, the most elegant formal system cannot replace engagement with life. The game must not become a sealed chamber.
+
+---
+
 ## Dashboards
 
-- **`/`** — Main 3D visualization with live terminal and quick move input
-- **`/gameplay`** — Active move submission with bead selector and validation feedback
-- **`/judges`** — Scoring rubric, validation queue, Castalian flags, promotion table
-- **`/audience`** — Read-only view with scoreboard and move feed
+| Route | Purpose |
+|-------|---------|
+| `/` | Main 3D visualization + live terminal + quick move input |
+| `/gameplay` | Active move submission, Abacus Board, transformer panel, validation |
+| `/judges` | Scoring rubric, validation queue, Castalian flags, promotion table |
+| `/audience` | Read-only view with scoreboard and move feed |
 
 ---
 
@@ -95,32 +286,36 @@ Moves are scored on four aesthetic dimensions:
 
 ---
 
-## The Ten Prompt Components
+## The Prompt System
 
-The `prompts/` directory contains testable LLM prompt templates for each game component:
+The `prompts/` directory contains testable LLM prompt templates:
 
-1. `board-knowledge-graph.md` — Knowledge graph generation
-2. `bead-agents.md` — Hermes agent bead responses
-3. `move-validation.md` — Move structural validation
-4. `audio-sonification.md` — Web Audio API sonification
-5. `scoring-aesthetic.md` — Aesthetic scoring rubric
-6. `game-modes.md` — Open, Contested, and Knecht Challenge modes
-7. `castalian-hierarchy.md` — Rank progression evaluation
-8. `llm-cultural-memory.md` — Librarian / skeptic / translator
-9. `knecht-protocol.md` — Castalian flagging and utility check
-10. `opening-move.md` — Sample canonical opening
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `board-knowledge-graph.md` | Knowledge graph generation |
+| 2 | `bead-agents.md` | Hermes agent bead responses |
+| 3 | `move-validation.md` | Move structural validation |
+| 4 | `audio-sonification.md` | Web Audio API sonification |
+| 5 | `scoring-aesthetic.md` | Aesthetic scoring rubric |
+| 6 | `game-modes.md` | Play modes (now includes Three Lives, Tegularius, Waldzell) |
+| 7 | `castalian-hierarchy.md` | Rank progression with provinces |
+| 8 | `llm-cultural-memory.md` | Librarian / Rain Maker voice |
+| 9 | `knecht-protocol.md` | Servant framing, tension-not-verdict |
+| 10 | `opening-move.md` | Temporal framing, beginnings magic |
+| 11 | `math-music-transformer.md` | 30 testable transformer prompts |
 
 See `PROMPT_REFINEMENTS.md` for 30 book-grounded updates to prompt nuance.
+
+See `GAP_ANALYSIS.md` for the complete textual analysis of what Hesse's book describes vs. what we had built.
 
 ---
 
 ## The Hessean Warning
 
 > "People know, or dimly feel, that if thinking is not kept pure and keen, and if respect for the world of mind is no longer operative, ships and automobiles will soon cease to run right, the engineer's slide rule and the computations of banks and stock exchanges will forfeit validity and authority, and chaos will ensue."
->
 > — Hermann Hesse
 
-As Joseph Knecht discovered, the most beautiful formal system in the world cannot replace engagement with practical life. The game must not become a sealed chamber. Every third session triggers the **Knecht Protocol**: if no practical application is identified, the session is flagged as *Castalian* — beautiful but existentially empty. True wisdom, as the Master tells Joseph, is lived, not taught.
+As Joseph Knecht discovered, the most beautiful formal system in the world cannot replace engagement with practical life. The game must not become a sealed chamber. True wisdom is lived, not taught.
 
 ---
 
@@ -131,5 +326,4 @@ MIT — for the love of synthesis.
 ---
 
 > "There is truth, my boy. But the doctrine you desire, absolute, perfect dogma that alone provides wisdom, does not exist. Nor should you long for a perfect doctrine, my friend. Rather, you should long for the perfection of yourself. The deity is within you, not in ideas and books. Truth is lived, not taught."
->
 > — Hermann Hesse, *The Glass Bead Game*
