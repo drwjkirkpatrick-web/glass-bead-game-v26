@@ -1,9 +1,27 @@
 # Glass Bead Game v26
 
+![Version](https://img.shields.io/badge/version-26.0.0-39ff14?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-f7df1e?style=flat-square&logo=javascript&logoColor=black)
+![Flask](https://img.shields.io/badge/Flask-SocketIO-000000?style=flat-square&logo=flask)
+![Three.js](https://img.shields.io/badge/Three.js-r160-000000?style=flat-square&logo=threedotjs)
+![Tests](https://img.shields.io/badge/tests-996%20passing-brightgreen?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+
 **A 3D knowledge graph visualization of the Modern Glass Bead Game.**
 
 > "The Glass Bead Game is thus a mode of playing with the total contents and values of our culture; it plays with them as, say, in the great age of the arts a painter might have played with the colours on his palette."
 > — Hermann Hesse, *The Glass Bead Game* (1943)
+
+---
+
+## The Two Halves of the Glass Bead Game
+
+**The LLM is cultural memory.** Every isomorphism, every resonance, every cross-domain correspondence ever discovered lives in its weights — the accumulated knowledge of mathematics, music, history, and code. It is the substrate through which a concept cast from one discipline can be refracted through another and recognized as the same structure in a different tongue.
+
+**The agent is the player.** Each glass bead is a Hermes agent — a specialized intelligence that receives a concept, applies its native disciplinary lens, and returns a refraction with confidence, austerity, and a musical interval. Agents unlock skills as the player demonstrates mastery. They compose into trace programs — reusable pipelines that chain refractions across domains.
+
+**Together they are the Game.** The LLM supplies the deep structural knowledge. The agent supplies the active intelligence that navigates it. Without the LLM, the beads are empty glass. Without the agents, the knowledge has no hands. The Game exists in the space where they meet — where a fugue becomes a Möbius strip becomes a recursive function, and all three are recognized as one pattern seen from three angles.
 
 ---
 
