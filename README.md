@@ -5,7 +5,7 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-f7df1e?style=flat-square&logo=javascript&logoColor=black)
 ![Flask](https://img.shields.io/badge/Flask-SocketIO-000000?style=flat-square&logo=flask)
 ![Three.js](https://img.shields.io/badge/Three.js-r160-000000?style=flat-square&logo=threedotjs)
-![Tests](https://img.shields.io/badge/tests-996%20passing-brightgreen?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-1023%20passing-brightgreen?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 **A 3D knowledge graph visualization of the Modern Glass Bead Game.**
@@ -61,13 +61,72 @@ Hesse described the game with precision that often surprises modern readers. Her
 
 ## Quick Start
 
+### Localhost (free, default)
+
 ```bash
 cd glass-bead-game-v26
 pip install -r requirements.txt
 python app.py
 ```
 
-Then open `http://localhost:9297/` in your browser.
+Then open `http://localhost:9297/` in your browser. Full SocketIO real-time updates, all 69 API endpoints, no cloud account needed.
+
+### Vercel (optional, free tier)
+
+```bash
+# From the project root:
+npm i -g vercel
+vercel
+```
+
+Vercel deploys the Flask app as a serverless function (`api/index.py`). The dashboards work via REST API polling. SocketIO WebSocket is not available on serverless — for full real-time functionality, run locally.
+
+The `VERCEL=1` environment variable is set automatically by `vercel.json`, which switches `Config.ASYNC_MODE` from `eventlet` (localhost) to `threading` (serverless compatible).
+
+### Bring Your Own Hermes Agent
+
+The Glass Bead Game is designed so **the player pays the token cost** of LLM-backed moves — not the server host. Players link their own Hermes agent to the Game server via the Player Agent Bridge:
+
+```bash
+# 1. Register your agent with the Game server
+curl -X POST http://localhost:9297/api/bridge/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "player_name": "Walker",
+    "agent_name": "Hermes-1",
+    "endpoint_url": "http://localhost:8080",
+    "domains": ["musica", "mathematica", "coda"]
+  }'
+# Returns: {agent_id, agent_token} — save these
+
+# 2. Delegate a move to your agent
+curl -X POST http://localhost:9297/api/bridge/delegate/move \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "agent_id": "agent_xxxx",
+    "from_concept": "fugue",
+    "from_domain": "musica",
+    "to_domain": "mathematica"
+  }'
+
+# 3. Your agent polls for tasks and submits results
+curl http://localhost:9297/api/bridge/tasks/agent_xxxx
+# Returns the pending task, or {"status": "no_tasks"}
+
+# 4. Agent submits the result
+curl -X POST http://localhost:9297/api/bridge/task/task_xxxx/result \
+  -H 'Content-Type: application/json' \
+  -d '{"agent_id": "agent_xxxx", "result": {"to_concept": "Möbius strip", "confidence": 0.92}}'
+```
+
+#### How it works
+
+| Component | Role | Cost |
+|-----------|------|------|
+| Game server | Knowledge graph, transformers, skill tree, dashboards, state | Hosting only (free localhost or Vercel free tier) |
+| Player's Hermes agent | LLM-backed refractions, moves, skill execution | **Player pays token cost** |
+
+The server holds no LLM — all intelligence comes from the player's linked agent. This keeps hosting costs at zero for the server operator while giving each player full control over their own token usage.
 
 ---
 
@@ -283,7 +342,7 @@ python -m pytest tests/test_*_transformer.py -o 'addopts=' -q
 python tests/test_math_philosophy_transformer.py
 ```
 
-Total: 996 tests across the project (294 new tests from bead skill tree + agent system).
+Total: 1023 tests across the project (321 new tests from bead skill tree, agent system, and player agent bridge).
 
 ---
 

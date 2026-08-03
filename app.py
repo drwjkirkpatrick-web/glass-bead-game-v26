@@ -432,6 +432,146 @@ def pathway_adjacency():
     return jsonify(selector.get_domain_adjacency())
 
 
+# ─── Player Agent Bridge APIs ─────────────────────────────────
+
+from src.player_agent_bridge import (
+    get_bridge, AgentStatus, TaskStatus,
+)
+
+@app.route('/api/bridge/register', methods=['POST'])
+def bridge_register_agent():
+    """Register a player's Hermes agent with the Game server."""
+    data = request.get_json() or {}
+    bridge = get_bridge()
+    result = bridge.register_agent(
+        player_name=data.get('player_name', ''),
+        agent_name=data.get('agent_name', ''),
+        endpoint_url=data.get('endpoint_url', ''),
+        domains=data.get('domains', []),
+    )
+    log_to_terminal(f"Bridge: agent '{data.get('agent_name', '')}' registered for '{data.get('player_name', '')}'", 'system')
+    return jsonify(result)
+
+@app.route('/api/bridge/agents', methods=['GET'])
+def bridge_list_agents():
+    """List all registered player agents."""
+    bridge = get_bridge()
+    return jsonify(bridge.to_dict())
+
+@app.route('/api/bridge/agent/<agent_id>', methods=['GET'])
+def bridge_get_agent(agent_id):
+    """Get a specific agent's status."""
+    bridge = get_bridge()
+    agent = bridge.get_agent(agent_id)
+    if not agent:
+        return jsonify({"error": "Unknown agent"}), 404
+    return jsonify(agent.to_dict())
+
+@app.route('/api/bridge/agent/<agent_id>/heartbeat', methods=['POST'])
+def bridge_heartbeat(agent_id):
+    """Update agent heartbeat — keeps the agent marked online."""
+    bridge = get_bridge()
+    if not bridge.heartbeat(agent_id):
+        return jsonify({"error": "Unknown agent"}), 404
+    return jsonify({"status": "ok", "timestamp": datetime.utcnow().isoformat()})
+
+@app.route('/api/bridge/agent/<agent_id>/disconnect', methods=['POST'])
+def bridge_disconnect(agent_id):
+    """Disconnect a player agent."""
+    bridge = get_bridge()
+    if not bridge.disconnect_agent(agent_id):
+        return jsonify({"error": "Unknown agent"}), 404
+    return jsonify({"status": "disconnected"})
+
+@app.route('/api/bridge/tasks/<agent_id>', methods=['GET'])
+def bridge_get_tasks(agent_id):
+    """Get pending tasks for an agent (agent polls this)."""
+    bridge = get_bridge()
+    task = bridge.get_pending_task(agent_id)
+    if not task:
+        return jsonify({"status": "no_tasks"})
+    return jsonify(task.to_dict())
+
+@app.route('/api/bridge/task/<task_id>/result', methods=['POST'])
+def bridge_submit_result(task_id):
+    """Submit a completed task result from the player's agent."""
+    data = request.get_json() or {}
+    bridge = get_bridge()
+    success = bridge.submit_result(
+        task_id=task_id,
+        result=data.get('result', {}),
+        agent_id=data.get('agent_id', ''),
+    )
+    if not success:
+        return jsonify({"error": "Task not found or wrong agent"}), 404
+    log_to_terminal(f"Bridge: task {task_id} completed by agent", 'move')
+    return jsonify({"status": "completed"})
+
+@app.route('/api/bridge/task/<task_id>/fail', methods=['POST'])
+def bridge_fail_task(task_id):
+    """Mark a task as failed."""
+    data = request.get_json() or {}
+    bridge = get_bridge()
+    success = bridge.fail_task(
+        task_id=task_id,
+        error=data.get('error', 'Unknown error'),
+        agent_id=data.get('agent_id', ''),
+    )
+    if not success:
+        return jsonify({"error": "Task not found or wrong agent"}), 404
+    return jsonify({"status": "failed"})
+
+@app.route('/api/bridge/delegate/move', methods=['POST'])
+def bridge_delegate_move():
+    """Delegate a full Game move to the player's Hermes agent."""
+    data = request.get_json() or {}
+    bridge = get_bridge()
+    task = bridge.delegate_move(
+        agent_id=data.get('agent_id', ''),
+        from_concept=data.get('from_concept', ''),
+        from_domain=data.get('from_domain', ''),
+        to_domain=data.get('to_domain', ''),
+        via=data.get('via', ''),
+        resonance=data.get('resonance', ''),
+    )
+    log_to_terminal(f"Bridge: move delegated to agent {data.get('agent_id', '')}", 'move')
+    return jsonify(task.to_dict())
+
+@app.route('/api/bridge/delegate/refract', methods=['POST'])
+def bridge_delegate_refract():
+    """Delegate a bead refraction to the player's Hermes agent."""
+    data = request.get_json() or {}
+    bridge = get_bridge()
+    task = bridge.delegate_refraction(
+        agent_id=data.get('agent_id', ''),
+        domain=data.get('domain', ''),
+        concept=data.get('concept', ''),
+        source_domain=data.get('source_domain', ''),
+    )
+    return jsonify(task.to_dict())
+
+@app.route('/api/bridge/delegate/skill', methods=['POST'])
+def bridge_delegate_skill():
+    """Delegate a skill execution to the player's Hermes agent."""
+    data = request.get_json() or {}
+    bridge = get_bridge()
+    task = bridge.delegate_skill(
+        agent_id=data.get('agent_id', ''),
+        skill_id=data.get('skill_id', ''),
+        inputs=data.get('inputs', {}),
+    )
+    return jsonify(task.to_dict())
+
+@app.route('/api/bridge/task/<task_id>', methods=['GET'])
+def bridge_get_task(task_id):
+    """Get task status and result."""
+    bridge = get_bridge()
+    task = bridge.get_task(task_id)
+    if not task:
+        return jsonify({"error": "Unknown task"}), 404
+    return jsonify(task.to_dict())
+
+
 # ─── Bead Agent & Skill Tree APIs ─────────────────────────────
 
 from src.bead_skills import get_skill_tree, SkillTier
@@ -898,5 +1038,9 @@ def handle_sonification(data):
 
 # ─── Main ───────────────────────────────────────────────
 
+# Vercel/serverless entry point: expose `app` as the WSGI callable.
+# Vercel's Python runtime imports the module in api/index.py and uses `app`.
+# Localhost: run `python app.py` for the full SocketIO server.
+
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=9297, debug=Config.DEBUG)
+    socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 9297)), debug=Config.DEBUG)

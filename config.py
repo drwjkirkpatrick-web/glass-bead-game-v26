@@ -3,11 +3,13 @@ import os
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'glass-bead-castalian-secret'
-    DEBUG = True
-    
-    # SocketIO
-    ASYNC_MODE = 'eventlet'
-    
+    DEBUG = os.environ.get('FLASK_DEBUG', '1') == '1'
+
+    # SocketIO — use threading for Vercel/serverless compatibility,
+    # eventlet for localhost long-running server
+    IS_VERCEL = os.environ.get('VERCEL') is not None
+    ASYNC_MODE = 'threading' if IS_VERCEL else 'eventlet'
+
     # Game settings
     GAME_NAME = 'Modern Glass Bead Game'
     GAME_VERSION = 'v26'
