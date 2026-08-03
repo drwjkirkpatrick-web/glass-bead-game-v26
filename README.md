@@ -1,6 +1,6 @@
 # Glass Bead Game v26
 
-![Version](https://img.shields.io/badge/version-26.0.0-39ff14?style=flat-square)
+![Version](https://img.shields.io/badge/version-26.0.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020+-f7df1e?style=flat-square&logo=javascript&logoColor=black)
 ![Flask](https://img.shields.io/badge/Flask-SocketIO-000000?style=flat-square&logo=flask)
