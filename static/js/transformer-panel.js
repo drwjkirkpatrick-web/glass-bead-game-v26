@@ -147,7 +147,7 @@
 
         async _loadCatalog() {
             try {
-                const response = await fetch('/api/transform/catalog');
+                const response = await fetch('/api/transform/math-music/catalog');
                 const catalog = await response.json();
                 this._renderCatalog(catalog);
             } catch (err) {
@@ -198,7 +198,7 @@
             this._setStatus('TRANSFORMING...');
 
             try {
-                const response = await fetch('/api/transform', {
+                const response = await fetch('/api/transform/math-music', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

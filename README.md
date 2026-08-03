@@ -197,6 +197,8 @@ curl -X POST http://localhost:9297/api/transform/history-music/batch \
 
 Valid `<pair>` values: `math-music`, `math-philosophy`, `music-language`, `history-philosophy`, `nature-math`, `philosophy-language`, `nature-music`, `technology-math`, `medicine-nature`, `history-music`, `philosophy-music`, `code-math`, `code-music`, `code-language`, `code-philosophy`, `code-technology`, `code-nature`, `code-history`, `code-medicine`.
 
+All 19 pairs are also accessible through the Pathway Selector (see below), which provides multi-hop routing and unified selection. The original Math↔Music transformer (`/api/transform/math-music`) is now part of the same unified system — the standalone `/api/transform` endpoint has been removed.
+
 ### Pathway Selection
 
 The **PathwaySelector** (`src/pathway_selector.py`) lets players choose which transformer pathway to use for a move. It maintains a registry of all 19 transformer pairs, builds a domain adjacency graph, and finds both direct and multi-hop routes between any two disciplines.
