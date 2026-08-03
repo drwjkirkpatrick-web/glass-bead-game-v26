@@ -264,7 +264,7 @@ def transform_entropy():
     entropy = -sum((c/total) * math.log2(c/total) for c in counts.values())
     return jsonify({"entropy": round(entropy, 3), "peak_stage": data.get('current_stage', 'UNKNOWN')})
 
-# ─── Knowledge Transformer APIs (10 domain-pair transformers) ─────────────
+# ─── Knowledge Transformer APIs (19 domain-pair transformers) ─────────────
 # Each transformer follows the same pattern as the Math↔Music transformer above:
 # POST  /api/transform/<pair>         → single transformation
 # GET   /api/transform/<pair>/catalog → browse isomorphisms
@@ -280,6 +280,16 @@ from src.medicine_nature_transformer import get_transformer as get_mn_transforme
 from src.history_music_transformer import get_transformer as get_hm_transformer
 from src.philosophy_music_transformer import get_transformer as get_pmu_transformer
 
+# ── 8 new Coda (Computer Code) transformers ──
+from src.code_math_transformer import get_transformer as get_cm_transformer
+from src.code_music_transformer import get_transformer as get_cmu_transformer
+from src.code_language_transformer import get_transformer as get_cl_transformer
+from src.code_philosophy_transformer import get_transformer as get_cp_transformer
+from src.code_technology_transformer import get_transformer as get_ct_transformer
+from src.code_nature_transformer import get_transformer as get_cn_transformer
+from src.code_history_transformer import get_transformer as get_ch_transformer
+from src.code_medicine_transformer import get_transformer as get_cmd_transformer
+
 _KT_REGISTRY = {
     'math-philosophy':    get_mp_transformer,
     'music-language':     get_ml_transformer,
@@ -291,6 +301,15 @@ _KT_REGISTRY = {
     'medicine-nature':     get_mn_transformer,
     'history-music':       get_hm_transformer,
     'philosophy-music':    get_pmu_transformer,
+    # ── Coda pairs (8 new) ──
+    'code-math':           get_cm_transformer,
+    'code-music':          get_cmu_transformer,
+    'code-language':       get_cl_transformer,
+    'code-philosophy':     get_cp_transformer,
+    'code-technology':     get_ct_transformer,
+    'code-nature':         get_cn_transformer,
+    'code-history':        get_ch_transformer,
+    'code-medicine':       get_cmd_transformer,
 }
 
 
@@ -337,7 +356,7 @@ def batch_transform_kt(pair):
 
 @app.route('/api/transform/all/catalog', methods=['GET'])
 def get_all_kt_catalogs():
-    """Browse all 10 knowledge transformer catalogs at once."""
+    """Browse all 19 knowledge transformer catalogs at once."""
     catalogs = {}
     for pair, get_fn in _KT_REGISTRY.items():
         try:
@@ -345,6 +364,101 @@ def get_all_kt_catalogs():
         except Exception as exc:
             catalogs[pair] = {"error": str(exc)}
     return jsonify(catalogs)
+
+
+# ─── Pathway Selection API ────────────────────────────────────
+
+from src.pathway_selector import get_selector as get_pathway_selector
+
+@app.route('/api/pathways', methods=['GET'])
+def list_all_pathways():
+    """List all 19 transformer pathways available in the Game."""
+    selector = get_pathway_selector()
+    pathways = selector.list_all_pathways()
+    return jsonify({
+        'total': len(pathways),
+        'pathways': [p.to_dict() for p in pathways],
+    })
+
+
+@app.route('/api/pathways/from/<domain>', methods=['GET'])
+def list_pathways_from_domain(domain):
+    """List all direct transformer pathways from a given domain."""
+    selector = get_pathway_selector()
+    pathways = selector.list_direct_pathways(domain)
+    return jsonify({
+        'domain': domain,
+        'count': len(pathways),
+        'pathways': [p.to_dict() for p in pathways],
+    })
+
+
+@app.route('/api/pathways/find', methods=['POST'])
+def find_pathways():
+    """Find all pathways (direct + multi-hop) between two domains."""
+    data = request.get_json() or {}
+    source = data.get('source_domain', '')
+    destination = data.get('destination_domain', '')
+    max_hops = data.get('max_hops', 3)
+
+    selector = get_pathway_selector()
+
+    # Direct pathway
+    direct_slug = selector.find_pair_slug(source, destination)
+    direct = None
+    if direct_slug:
+        p = selector.select_pathway(direct_slug)
+        if p:
+            direct = p.to_dict()
+
+    # Multi-hop pathways
+    multi_hops = selector.find_multi_hop_paths(source, destination, max_hops=max_hops)
+
+    return jsonify({
+        'source': source,
+        'destination': destination,
+        'direct': direct,
+        'multi_hop': [mh.to_dict() for mh in multi_hops],
+        'total_routes': (1 if direct else 0) + len(multi_hops),
+    })
+
+
+@app.route('/api/pathways/select', methods=['POST'])
+def select_and_execute_pathway():
+    """Select a pathway by pair slug and execute a transformation through it."""
+    data = request.get_json() or {}
+    pair_slug = data.get('pair_slug', '')
+    selector = get_pathway_selector()
+
+    result = selector.execute_transform(
+        pair_slug=pair_slug,
+        origin_concept=data.get('origin_concept', ''),
+        origin_domain=data.get('origin_domain', ''),
+        destination_domain=data.get('destination_domain', ''),
+        structural_property=data.get('structural_property', ''),
+        resonance_sentence=data.get('resonance_sentence', ''),
+        tokens=data.get('tokens', []),
+    )
+
+    if result is None:
+        return jsonify({"error": f"Unknown or unloadable transformer pair: {pair_slug}"}), 404
+
+    log_to_terminal(f"Pathway[{pair_slug}]: {result['origin_concept']} → {result['destination_concept']} ({result['total_confidence']})", 'move')
+    return jsonify(result)
+
+
+@app.route('/api/pathways/catalog', methods=['GET'])
+def pathway_catalog():
+    """Full catalog of all pathway metadata."""
+    selector = get_pathway_selector()
+    return jsonify(selector.get_pathway_catalog())
+
+
+@app.route('/api/pathways/adjacency', methods=['GET'])
+def pathway_adjacency():
+    """Domain adjacency graph showing which domains connect to which."""
+    selector = get_pathway_selector()
+    return jsonify(selector.get_domain_adjacency())
 
 
 # ─── Gap Module APIs ─────────────────────────────────────
@@ -655,6 +769,7 @@ def handle_sonification(data):
             'philosophia': 79, # G5
             'technologia': 84, # C6
             'medicina': 88,    # E6
+            'coda': 92,        # F#6
         }
         from_pitch = domain_pitches.get(move['from_domain'], 60)
         to_pitch = domain_pitches.get(move['to_domain'], 60)

@@ -21,7 +21,8 @@ class Config:
         'lingua',
         'philosophia',
         'technologia',
-        'medicina'
+        'medicina',
+        'coda',
     ]
     
     # Bead types (Magister roles)
@@ -34,6 +35,7 @@ class Config:
         'philosophia': {'name': 'Magister Philosophiae', 'color': '#9370db', 'icon': '◊'},
         'technologia': {'name': 'Magister Technologiae', 'color': '#ffa500', 'icon': '⚙'},
         'medicina': {'name': 'Magister Medicinae', 'color': '#ff69b4', 'icon': '✚'},
+        'coda': {'name': 'Magister Codae', 'color': '#39ff14', 'icon': '⌘'},
     }
     
     # Ranks

@@ -61,7 +61,8 @@ Then open `http://localhost:9297/` in your browser.
 | 3D Scene | Three.js r160 (glass materials, starfield, grid) |
 | Music | VexFlow 4.x (SVG staff notation) |
 | Math | KaTeX 0.16.9 (LaTeX formula rendering) |
-| Transformers | 11 domain-pair isomorphism engines (Math↔Music + 10 knowledge transformers) |
+| Transformers | 19 domain-pair isomorphism engines (Math↔Music + 10 knowledge + 8 Coda transformers) |
+| Pathway Selector | `src/pathway_selector.py` — 19-pair registry, multi-hop routing, pathway selection |
 | Live Updates | WebSocket broadcasts via SocketIO rooms |
 | Styling | CSS glassmorphism, JetBrains Mono, dark terminal |
 
@@ -107,26 +108,42 @@ Each stage carries a **human language thread** — not decoration, but the struc
 
 ---
 
-## Knowledge Transformers: 10 Domain-Pair Transformers
+## Knowledge Transformers: 19 Domain-Pair Transformers
 
-The Math ↔ Music transformer was the original. **Ten new knowledge transformers** extend this pattern across all eight Castalian domains, giving players a formal scaffold for finding the thread between any two fields.
+The Math ↔ Music transformer was the original. **Ten knowledge transformers** extend this pattern across the original eight Castalian domains. **Eight new Coda transformers** connect the ninth discipline — Computer Code — to each of the others, giving players a formal scaffold for finding the thread between any two fields.
 
 Each transformer follows the same architecture: 10 isomorphisms, 6-stage pipeline (PARSE → TAG → MAP → PROJECT → COMPOSE → VERIFY), confidence scoring, and Hesse-style resonance sentences.
 
-### The 10 Transformers
+### The 11 Original Transformers
 
 | # | Transformer | Module | Domain Pair | Example Isomorphism |
 |---|------------|--------|-------------|---------------------|
-| 1 | Math ↔ Philosophy | `src/math_philosophy_transformer.py` | Mathematics ↔ Philosophy | Gödel incompleteness ↔ epistemological limits |
-| 2 | Music ↔ Language | `src/music_language_transformer.py` | Music ↔ Linguistics | Syntax tree ↔ voice-leading hierarchy |
-| 3 | History ↔ Philosophy | `src/history_philosophy_transformer.py` | History ↔ Philosophy | Hegelian dialectic ↔ dialectical historical process |
-| 4 | Nature ↔ Math | `src/nature_math_transformer.py` | Natural Sciences ↔ Mathematics | Fibonacci in plants ↔ recursive sequences |
-| 5 | Philosophy ↔ Language | `src/philosophy_language_transformer.py` | Philosophy ↔ Linguistics | Wittgenstein language games ↔ speech act theory |
-| 6 | Nature ↔ Music | `src/nature_music_transformer.py` | Nature ↔ Music | Birdsong intervals ↔ melodic ornamentation |
-| 7 | Technology ↔ Math | `src/technology_math_transformer.py` | Technology ↔ Mathematics | Boolean logic ↔ digital circuits |
-| 8 | Medicine ↔ Nature | `src/medicine_nature_transformer.py` | Medicine ↔ Nature | Immune system ↔ ecological balance |
-| 9 | History ↔ Music | `src/history_music_transformer.py` | History ↔ Music | Baroque era ↔ fugue/contrapuntal form |
-| 10 | Philosophy ↔ Music | `src/philosophy_music_transformer.py` | Philosophy ↔ Music | Pythagorean harmony of spheres ↔ tonal harmony |
+| 1 | Math ↔ Music | `src/math_music_transformer.py` | Mathematics ↔ Music | Cyclic group Z₁₂ ↔ Circle of fifths |
+| 2 | Math ↔ Philosophy | `src/math_philosophy_transformer.py` | Mathematics ↔ Philosophy | Gödel incompleteness ↔ epistemological limits |
+| 3 | Music ↔ Language | `src/music_language_transformer.py` | Music ↔ Linguistics | Syntax tree ↔ voice-leading hierarchy |
+| 4 | History ↔ Philosophy | `src/history_philosophy_transformer.py` | History ↔ Philosophy | Hegelian dialectic ↔ dialectical historical process |
+| 5 | Nature ↔ Math | `src/nature_math_transformer.py` | Natural Sciences ↔ Mathematics | Fibonacci in plants ↔ recursive sequences |
+| 6 | Philosophy ↔ Language | `src/philosophy_language_transformer.py` | Philosophy ↔ Linguistics | Wittgenstein language games ↔ speech act theory |
+| 7 | Nature ↔ Music | `src/nature_music_transformer.py` | Nature ↔ Music | Birdsong intervals ↔ melodic ornamentation |
+| 8 | Technology ↔ Math | `src/technology_math_transformer.py` | Technology ↔ Mathematics | Boolean logic ↔ digital circuits |
+| 9 | Medicine ↔ Nature | `src/medicine_nature_transformer.py` | Medicine ↔ Nature | Immune system ↔ ecological balance |
+| 10 | History ↔ Music | `src/history_music_transformer.py` | History ↔ Music | Baroque era ↔ fugue/contrapuntal form |
+| 11 | Philosophy ↔ Music | `src/philosophy_music_transformer.py` | Philosophy ↔ Music | Pythagorean harmony of spheres ↔ tonal harmony |
+
+### The 8 New Coda Transformers
+
+The ninth disciple — **Magister Codae** — embodies Computer Code as a Castalian discipline. Code is the modern grammar of logic, the language machines speak, and the newest bead on the board.
+
+| # | Transformer | Module | Domain Pair | Example Isomorphism |
+|---|------------|--------|-------------|---------------------|
+| 1 | Code ↔ Math | `src/code_math_transformer.py` | Coda ↔ Mathematics | Turing machine ↔ algorithm |
+| 2 | Code ↔ Music | `src/code_music_transformer.py` | Coda ↔ Music | Algorithmic composition ↔ code-as-score |
+| 3 | Code ↔ Language | `src/code_language_transformer.py` | Coda ↔ Linguistics | Formal grammar ↔ parser implementation |
+| 4 | Code ↔ Philosophy | `src/code_philosophy_transformer.py` | Coda ↔ Philosophy | Formal logic ↔ boolean code |
+| 5 | Code ↔ Technology | `src/code_technology_transformer.py` | Coda ↔ Technology | API ↔ hardware interface |
+| 6 | Code ↔ Nature | `src/code_nature_transformer.py` | Coda ↔ Nature | Genetic algorithm ↔ natural selection |
+| 7 | Code ↔ History | `src/code_history_transformer.py` | Coda ↔ History | Version control ↔ historical record |
+| 8 | Code ↔ Medicine | `src/code_medicine_transformer.py` | Coda ↔ Medicine | Diagnostic algorithm ↔ clinical reasoning |
 
 ### How to Use the Transformers
 
@@ -160,7 +177,7 @@ curl -X POST http://localhost:9297/api/transform/math-philosophy \
 # Browse isomorphisms for a specific pair
 curl http://localhost:9297/api/transform/nature-math/catalog
 
-# All 10 catalogs at once
+# All 19 catalogs at once
 curl http://localhost:9297/api/transform/all/catalog
 
 # Batch transform
@@ -173,12 +190,42 @@ curl -X POST http://localhost:9297/api/transform/history-music/batch \
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/transform/<pair>` | POST | Single transformation (pair = `math-philosophy`, `music-language`, etc.) |
+| `/api/transform/<pair>` | POST | Single transformation (pair = `math-philosophy`, `code-math`, etc.) |
 | `/api/transform/<pair>/catalog` | GET | Browse 10 isomorphisms for that pair |
 | `/api/transform/<pair>/batch` | POST | Batch transform multiple moves |
-| `/api/transform/all/catalog` | GET | All 10 transformer catalogs at once |
+| `/api/transform/all/catalog` | GET | All 19 transformer catalogs at once |
 
-Valid `<pair>` values: `math-philosophy`, `music-language`, `history-philosophy`, `nature-math`, `philosophy-language`, `nature-music`, `technology-math`, `medicine-nature`, `history-music`, `philosophy-music`.
+Valid `<pair>` values: `math-music`, `math-philosophy`, `music-language`, `history-philosophy`, `nature-math`, `philosophy-language`, `nature-music`, `technology-math`, `medicine-nature`, `history-music`, `philosophy-music`, `code-math`, `code-music`, `code-language`, `code-philosophy`, `code-technology`, `code-nature`, `code-history`, `code-medicine`.
+
+### Pathway Selection
+
+The **PathwaySelector** (`src/pathway_selector.py`) lets players choose which transformer pathway to use for a move. It maintains a registry of all 19 transformer pairs, builds a domain adjacency graph, and finds both direct and multi-hop routes between any two disciplines.
+
+#### Pathway API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/pathways` | GET | List all 19 transformer pathways |
+| `/api/pathways/from/<domain>` | GET | List direct pathways from a domain |
+| `/api/pathways/find` | POST | Find direct + multi-hop routes between two domains |
+| `/api/pathways/select` | POST | Select a pathway by slug and execute a transformation |
+| `/api/pathways/catalog` | GET | Full pathway metadata catalog |
+| `/api/pathways/adjacency` | GET | Domain adjacency graph |
+
+```bash
+# Find all routes from Coda to Musica (direct + multi-hop)
+curl -X POST http://localhost:9297/api/pathways/find \
+  -H 'Content-Type: application/json' \
+  -d '{"source_domain": "coda", "destination_domain": "musica", "max_hops": 3}'
+
+# Select and execute the code-math pathway
+curl -X POST http://localhost:9297/api/pathways/select \
+  -H 'Content-Type: application/json' \
+  -d '{"pair_slug": "code-math", "origin_concept": "recursion", "origin_domain": "coda", "destination_domain": "mathematica", "structural_property": "self-reference"}'
+
+# List all direct pathways from Coda
+curl http://localhost:9297/api/pathways/from/coda
+```
 
 ### Choosing a Transformer for Your Move
 
@@ -216,7 +263,7 @@ python -m pytest tests/test_*_transformer.py -o 'addopts=' -q
 python tests/test_math_philosophy_transformer.py
 ```
 
-Total: 418 tests across the project (102 new tests from the 10 transformers).
+Total: 702 tests across the project (284 new tests from the 8 Coda transformers + pathway selector).
 
 ---
 

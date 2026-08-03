@@ -193,7 +193,8 @@ class GraphPathfinder:
         pf = cls()
         domains = [
             'musica', 'mathematica', 'historia', 'natura',
-            'lingua', 'philosophia', 'technologia', 'medicina'
+            'lingua', 'philosophia', 'technologia', 'medicina',
+            'coda'
         ]
         bead_names = {
             'musica': 'Magister Musicae',
@@ -204,6 +205,7 @@ class GraphPathfinder:
             'philosophia': 'Magister Philosophiae',
             'technologia': 'Magister Technologiae',
             'medicina': 'Magister Medicinae',
+            'coda': 'Magister Codae',
         }
         colors = {
             'musica': '#00e5ff',
@@ -214,6 +216,7 @@ class GraphPathfinder:
             'philosophia': '#9370db',
             'technologia': '#ffa500',
             'medicina': '#ff69b4',
+            'coda': '#39ff14',
         }
 
         for i, domain in enumerate(domains):

@@ -75,16 +75,16 @@ def test_narrative_building():
 
 def test_seed_graph():
     pf = GraphPathfinder.from_seed()
-    assert len(pf.nodes) == 8
-    assert len(pf.edges) == 8  # cyclic chain of 8 nodes
+    assert len(pf.nodes) == 9
+    assert len(pf.edges) == 9  # cyclic chain of 9 nodes
 
 
 def test_bfs_seed_graph_wraps():
     pf = GraphPathfinder.from_seed()
-    # node_7 is medicina, node_0 is musica; edge wraps 7->0
-    result = pf.bfs_shortest_path('node_7', 'node_0')
+    # node_8 is coda, node_0 is musica; edge wraps 8->0
+    result = pf.bfs_shortest_path('node_8', 'node_0')
     assert result is not None
-    assert result['path_nodes'] == ['node_7', 'node_0']
+    assert result['path_nodes'] == ['node_8', 'node_0']
 
 
 def test_astar_seed_graph_longer_path():
